@@ -51,6 +51,15 @@ export async function generateAzureSwaFiles({
   const clientPath = join(distPath, "client");
   await mkdir(clientPath, { recursive: true });
 
+  // SWA deploy action requires a default file even for SSR-only apps.
+  // The /* → /api rewrite in staticwebapp.config.json means this is never served.
+  const indexPath = join(clientPath, "index.html");
+  try {
+    await writeFile(indexPath, "", { flag: "wx" });
+  } catch {
+    // file already exists from the Astro build — leave it alone
+  }
+
   await writeJson(join(clientPath, "staticwebapp.config.json"), {
     routes: [
       {
