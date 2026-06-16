@@ -28,10 +28,10 @@ describe("basic Astro example build", () => {
     expect(existsSync(join(distDir, "api/package.json"))).toBe(true);
     expect(existsSync(join(distDir, "api/server/index.mjs"))).toBe(true);
     expect(existsSync(join(distDir, "api/server/chunks"))).toBe(true);
-    expect(existsSync(join(distDir, "staticwebapp.config.json"))).toBe(true);
+    expect(existsSync(join(distDir, "client", "staticwebapp.config.json"))).toBe(true);
 
     const config = JSON.parse(
-      await readFile(join(distDir, "staticwebapp.config.json"), "utf8"),
+      await readFile(join(distDir, "client", "staticwebapp.config.json"), "utf8"),
     );
 
     expect(config.routes[0].route).toBe("/_astro/*");

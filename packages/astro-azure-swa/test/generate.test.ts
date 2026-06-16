@@ -11,7 +11,7 @@ let root: string;
 
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), "astro-azure-swa-"));
-  await mkdir(join(root, "dist"), { recursive: true });
+  await mkdir(join(root, "dist", "client"), { recursive: true });
 });
 
 afterEach(async () => {
@@ -83,7 +83,7 @@ describe("generateAzureSwaFiles", () => {
       functionName: "server",
     });
 
-    expect(await readJson("staticwebapp.config.json")).toEqual({
+    expect(await readJson("client/staticwebapp.config.json")).toEqual({
       routes: [
         {
           route: "/_astro/*",
@@ -110,7 +110,7 @@ describe("generateAzureSwaFiles", () => {
     expect(await readJson("api/package.json")).toMatchObject({
       main: "server/index.mjs",
     });
-    expect(await readJson("staticwebapp.config.json")).toMatchObject({
+    expect(await readJson("client/staticwebapp.config.json")).toMatchObject({
       routes: expect.arrayContaining([
         {
           route: "/*",

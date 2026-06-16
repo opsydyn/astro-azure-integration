@@ -48,7 +48,10 @@ export async function generateAzureSwaFiles({
   );
   await writeFunctionEntrypoint(distPath, functionPath, functionName);
 
-  await writeJson(join(distPath, "staticwebapp.config.json"), {
+  const clientPath = join(distPath, "client");
+  await mkdir(clientPath, { recursive: true });
+
+  await writeJson(join(clientPath, "staticwebapp.config.json"), {
     routes: [
       {
         route: "/_astro/*",
