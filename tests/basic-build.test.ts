@@ -9,6 +9,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 const execFileAsync = promisify(execFile);
 const exampleDir = join(process.cwd(), "examples/basic");
 const distDir = join(exampleDir, "dist");
+const bunExecutable = process.env.BUN_INSTALL
+  ? join(process.env.BUN_INSTALL, "bin", "bun")
+  : "bun";
 
 beforeEach(async () => {
   await rm(distDir, { recursive: true, force: true });
@@ -16,7 +19,7 @@ beforeEach(async () => {
 
 describe("basic Astro example build", () => {
   it("builds the app and emits Azure SWA files", async () => {
-    await execFileAsync(process.execPath, ["run", "build"], {
+    await execFileAsync(bunExecutable, ["run", "build"], {
       cwd: exampleDir,
     });
 
