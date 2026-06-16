@@ -24,3 +24,24 @@ export default defineConfig({
 bun install
 bun run check
 ```
+
+## Example
+
+```bash
+bun run test:example
+bunx @azure/static-web-apps-cli start ./examples/basic/dist/client --api-location ./examples/basic/dist/api
+```
+
+## Generated Output
+
+```txt
+dist/
+├── client/
+├── api/
+│   ├── host.json
+│   ├── package.json
+│   └── server/
+│       ├── chunks/
+│       └── index.mjs
+└── staticwebapp.config.json
+```
