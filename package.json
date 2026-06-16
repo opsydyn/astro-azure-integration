@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "build": "bun run --cwd packages/astro-azure-swa build",
+    "dev": "bun run build && bun run --cwd examples/basic dev",
     "typecheck": "bun run --cwd packages/astro-azure-swa typecheck",
     "test": "vitest run",
     "test:example": "bun run --cwd examples/basic build",
