@@ -84,6 +84,9 @@ describe("generateAzureSwaFiles", () => {
     });
 
     expect(await readJson("client/staticwebapp.config.json")).toEqual({
+      platform: {
+        apiRuntime: "node:22",
+      },
       routes: [
         {
           route: "/_astro/*",
@@ -94,6 +97,124 @@ describe("generateAzureSwaFiles", () => {
         {
           route: "/*",
           rewrite: "/api/server",
+        },
+      ],
+    });
+  });
+
+  it("allows overriding the API runtime from adapter options", async () => {
+    await generateAzureSwaFiles({
+      distDir: distUrl(),
+      functionName: "server",
+      apiRuntime: "node:20",
+    });
+
+    expect(await readJson("client/staticwebapp.config.json")).toMatchObject({
+      platform: {
+        apiRuntime: "node:20",
+      },
+    });
+  });
+
+  it("allows setting the API runtime inside the Static Web Apps config", async () => {
+    await generateAzureSwaFiles({
+      distDir: distUrl(),
+      functionName: "server",
+      staticWebAppConfig: {
+        platform: {
+          apiRuntime: "node:20",
+        },
+      },
+    });
+
+    expect(await readJson("client/staticwebapp.config.json")).toMatchObject({
+      platform: {
+        apiRuntime: "node:20",
+      },
+    });
+  });
+
+  it("merges custom Static Web Apps config from adapter options", async () => {
+    await generateAzureSwaFiles({
+      distDir: distUrl(),
+      functionName: "server",
+      staticWebAppConfig: {
+        globalHeaders: {
+          "x-powered-by": "astro",
+        },
+        responseOverrides: {
+          "404": {
+            rewrite: "/404",
+          },
+        },
+        routes: [
+          {
+            route: "/admin/*",
+            allowedRoles: ["authenticated"],
+          },
+        ],
+      },
+    });
+
+    expect(await readJson("client/staticwebapp.config.json")).toEqual({
+      globalHeaders: {
+        "x-powered-by": "astro",
+      },
+      responseOverrides: {
+        "404": {
+          rewrite: "/404",
+        },
+      },
+      platform: {
+        apiRuntime: "node:22",
+      },
+      routes: [
+        {
+          route: "/_astro/*",
+          headers: {
+            "cache-control": "public, max-age=31536000, immutable",
+          },
+        },
+        {
+          route: "/admin/*",
+          allowedRoles: ["authenticated"],
+        },
+        {
+          route: "/*",
+          rewrite: "/api/server",
+        },
+      ],
+    });
+  });
+
+  it("allows explicitly replacing the generated catch-all route", async () => {
+    await generateAzureSwaFiles({
+      distDir: distUrl(),
+      functionName: "server",
+      staticWebAppConfig: {
+        routes: [
+          {
+            route: "/*",
+            rewrite: "/maintenance.html",
+          },
+        ],
+      },
+    });
+
+    expect(await readJson("client/staticwebapp.config.json")).toEqual({
+      platform: {
+        apiRuntime: "node:22",
+      },
+      routes: [
+        {
+          route: "/_astro/*",
+          headers: {
+            "cache-control": "public, max-age=31536000, immutable",
+          },
+        },
+        {
+          route: "/*",
+          rewrite: "/maintenance.html",
         },
       ],
     });
@@ -111,6 +232,9 @@ describe("generateAzureSwaFiles", () => {
       main: "server/index.mjs",
     });
     expect(await readJson("client/staticwebapp.config.json")).toMatchObject({
+      platform: {
+        apiRuntime: "node:22",
+      },
       routes: expect.arrayContaining([
         {
           route: "/*",

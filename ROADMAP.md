@@ -11,6 +11,7 @@ This package should stay focused on a native Astro 6 adapter for Azure Static We
 - Local SWA CLI verification for SSR pages, API routes, POST handlers, redirects, cookies, and 404s.
 - GitHub Actions workflow that builds the package and deploys the example from generated output.
 - Successful deployment: https://blue-wave-00d0bf30f.7.azurestaticapps.net/
+- Controlled SWA config extensibility through adapter-level `apiRuntime` and `staticWebAppConfig` options.
 
 ## Recommended Next Changes
 
@@ -35,12 +36,12 @@ Recommendation:
 
 Add `platform.apiRuntime` to the generated `staticwebapp.config.json`.
 
-Recommended default:
+Generated default:
 
 ```json
 {
   "platform": {
-    "apiRuntime": "node:20"
+    "apiRuntime": "node:22"
   }
 }
 ```
@@ -53,8 +54,9 @@ Why:
 
 Recommendation:
 
-- Default to `node:20`.
-- Add an adapter option for `node:22` once local and CI coverage confirms it.
+- Default to `node:22`.
+- Keep `node:20` as an adapter-level override for projects that need the older supported LTS runtime.
+- Allow additional `staticwebapp.config.json` settings through `staticWebAppConfig` in `astro.config.ts`.
 - Do not target Node 18 for new deployments.
 
 ### 3. Preserve Multiple `Set-Cookie` Headers
@@ -90,24 +92,7 @@ Recommendation:
 - Keep the generated wrapper separate from the Astro server bundle so Azure Functions internals are not bundled into Astro output.
 - Keep testing for accidental `@azure/functions-core` leakage in generated server files.
 
-### 5. Add Controlled SWA Config Extensibility
-
-Add a small escape hatch for advanced `staticwebapp.config.json` settings.
-
-Why:
-
-- Users may need auth routes, global headers, response overrides, networking, or custom MIME types.
-- The adapter should own the SSR rewrite and asset cache route, but should not block valid SWA configuration.
-
-Recommendation:
-
-- Start with narrow options:
-  - `platformApiRuntime`
-  - `staticWebAppConfig`
-- Merge user config without allowing accidental removal of the required catch-all SSR rewrite unless explicitly requested.
-- Document merge order and collision behavior.
-
-### 6. Harden Deployment Workflow
+### 5. Harden Deployment Workflow
 
 Improve the generated GitHub Actions workflow once the package behavior stabilizes.
 

@@ -39,6 +39,9 @@ describe("basic Astro example build", () => {
       route: "/*",
       rewrite: "/api/server",
     });
+    expect(config.platform).toEqual({
+      apiRuntime: "node:22",
+    });
 
     const entrypoint = await readFile(
       join(distDir, "api/server/index.mjs"),

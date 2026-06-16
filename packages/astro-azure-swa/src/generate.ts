@@ -3,15 +3,48 @@ import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export interface GenerateAzureSwaFilesOptions {
+  apiRuntime?: AzureSwaApiRuntime;
   distDir: URL;
   functionName: string;
+  staticWebAppConfig?: AzureSwaStaticWebAppConfig;
 }
 
+export type AzureSwaApiRuntime = "node:20" | "node:22";
+
+export interface AzureSwaStaticWebAppConfig {
+  auth?: Record<string, unknown>;
+  globalHeaders?: Record<string, string>;
+  mimeTypes?: Record<string, string>;
+  navigationFallback?: Record<string, unknown>;
+  networking?: Record<string, unknown>;
+  platform?: {
+    apiRuntime?: AzureSwaApiRuntime;
+    [key: string]: unknown;
+  };
+  responseOverrides?: Record<string, unknown>;
+  routes?: AzureSwaRouteConfig[];
+  [key: string]: unknown;
+}
+
+export interface AzureSwaRouteConfig {
+  route: string;
+  allowedRoles?: string[];
+  headers?: Record<string, string>;
+  methods?: string[];
+  redirect?: string;
+  rewrite?: string;
+  statusCode?: number;
+  [key: string]: unknown;
+}
+
+const DEFAULT_API_RUNTIME: AzureSwaApiRuntime = "node:22";
 const methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"];
 
 export async function generateAzureSwaFiles({
+  apiRuntime,
   distDir,
   functionName,
+  staticWebAppConfig,
 }: GenerateAzureSwaFilesOptions): Promise<void> {
   const hookDirPath = fileURLToPath(distDir);
   const distPath =
@@ -60,8 +93,35 @@ export async function generateAzureSwaFiles({
     // file already exists from the Astro build — leave it alone
   }
 
-  await writeJson(join(clientPath, "staticwebapp.config.json"), {
-    routes: [
+  await writeJson(
+    join(clientPath, "staticwebapp.config.json"),
+    createStaticWebAppConfig({
+      apiRuntime,
+      functionName,
+      staticWebAppConfig,
+    }),
+  );
+}
+
+function createStaticWebAppConfig({
+  apiRuntime,
+  functionName,
+  staticWebAppConfig = {},
+}: {
+  apiRuntime?: AzureSwaApiRuntime;
+  functionName: string;
+  staticWebAppConfig?: AzureSwaStaticWebAppConfig;
+}): AzureSwaStaticWebAppConfig {
+  return {
+    ...staticWebAppConfig,
+    platform: {
+      ...staticWebAppConfig.platform,
+      apiRuntime:
+        apiRuntime ??
+        staticWebAppConfig.platform?.apiRuntime ??
+        DEFAULT_API_RUNTIME,
+    },
+    routes: mergeRoutes(staticWebAppConfig.routes ?? [], [
       {
         route: "/_astro/*",
         headers: {
@@ -72,8 +132,29 @@ export async function generateAzureSwaFiles({
         route: "/*",
         rewrite: `/api/${functionName}`,
       },
-    ],
-  });
+    ]),
+  };
+}
+
+function mergeRoutes(
+  customRoutes: AzureSwaRouteConfig[],
+  generatedRoutes: AzureSwaRouteConfig[],
+): AzureSwaRouteConfig[] {
+  const customRoutePaths = new Set(customRoutes.map(({ route }) => route));
+  const assetRoute = generatedRoutes.find(({ route }) => route === "/_astro/*");
+  const catchAllRoute = generatedRoutes.find(({ route }) => route === "/*");
+  const otherGeneratedRoutes = generatedRoutes.filter(
+    ({ route }) => route !== "/_astro/*" && route !== "/*" && !customRoutePaths.has(route),
+  );
+
+  return [
+    ...(assetRoute && !customRoutePaths.has(assetRoute.route) ? [assetRoute] : []),
+    ...customRoutes,
+    ...otherGeneratedRoutes,
+    ...(catchAllRoute && !customRoutePaths.has(catchAllRoute.route)
+      ? [catchAllRoute]
+      : []),
+  ];
 }
 
 function stripTrailingSeparator(path: string): string {

@@ -3,5 +3,7 @@ import azureSwa from "@opsydyn/astro-azure-swa";
 
 export default defineConfig({
   output: "server",
-  adapter: azureSwa(),
+  adapter: azureSwa({
+    apiRuntime: "node:22",
+  }),
 });

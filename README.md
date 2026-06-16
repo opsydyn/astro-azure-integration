@@ -14,9 +14,40 @@ import azureSwa from "@opsydyn/astro-azure-swa";
 
 export default defineConfig({
   output: "server",
-  adapter: azureSwa(),
+  adapter: azureSwa({
+    apiRuntime: "node:22",
+  }),
 });
 ```
+
+The adapter defaults to `node:22` for Azure Static Web Apps managed APIs. You
+can override the runtime or add other `staticwebapp.config.json` settings in
+`astro.config.ts`:
+
+```ts
+export default defineConfig({
+  output: "server",
+  adapter: azureSwa({
+    apiRuntime: "node:20",
+    staticWebAppConfig: {
+      globalHeaders: {
+        "x-powered-by": "astro",
+      },
+      routes: [
+        {
+          route: "/admin/*",
+          allowedRoles: ["authenticated"],
+        },
+      ],
+    },
+  }),
+});
+```
+
+`staticWebAppConfig` is merged into the generated config. The adapter always
+adds the immutable `/_astro/*` asset cache route unless you define your own
+route with the same path. It also appends the SSR catch-all rewrite as the final
+route unless you explicitly provide your own `/*` route.
 
 ## Local Development
 

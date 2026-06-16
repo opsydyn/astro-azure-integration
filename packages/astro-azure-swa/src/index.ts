@@ -1,11 +1,17 @@
 import type { AstroIntegration } from "astro";
 
-import { generateAzureSwaFiles } from "./generate.js";
+import {
+  generateAzureSwaFiles,
+  type AzureSwaApiRuntime,
+  type AzureSwaStaticWebAppConfig,
+} from "./generate.js";
 
 const ADAPTER_NAME = "@opsydyn/astro-azure-swa";
 
 export interface AzureSwaAdapterOptions {
+  apiRuntime?: AzureSwaApiRuntime;
   functionName?: string;
+  staticWebAppConfig?: AzureSwaStaticWebAppConfig;
 }
 
 export default function azureSwaAdapter(
@@ -37,8 +43,10 @@ export default function azureSwaAdapter(
       },
       "astro:build:done": async ({ dir }) => {
         await generateAzureSwaFiles({
+          apiRuntime: options.apiRuntime,
           distDir: dir,
           functionName,
+          staticWebAppConfig: options.staticWebAppConfig,
         });
       },
     },
