@@ -12,6 +12,13 @@
         "vitest": "^4.0.0",
       },
     },
+    "examples/basic": {
+      "name": "basic-astro-azure-swa-example",
+      "dependencies": {
+        "@opsydyn/astro-azure-swa": "workspace:*",
+        "astro": "^6.0.0",
+      },
+    },
     "packages/astro-azure-swa": {
       "name": "@opsydyn/astro-azure-swa",
       "version": "0.0.0",
@@ -299,6 +306,8 @@
     "axobject-query": ["axobject-query@4.1.0", "", {}, "sha512-qIj0G9wZbMGNLjLmg1PT6v2mE9AH2zlnADJD/2tC6E00hgmhUOfEB6greHPAfLRSufHqROIUTkw6E+M3lH0PTQ=="],
 
     "bail": ["bail@2.0.2", "", {}, "sha512-0xO6mYd7JB2YesxDKplafRpsiOzPt9V02ddPCLbY1xYGPOX24NTyN50qnUxgCPcSoYMhKpAuBTjQoRZCAkUDRw=="],
+
+    "basic-astro-azure-swa-example": ["basic-astro-azure-swa-example@workspace:examples/basic"],
 
     "boolbase": ["boolbase@1.0.0", "", {}, "sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww=="],
 

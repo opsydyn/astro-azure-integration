@@ -1,0 +1,14 @@
+{
+  "name": "basic-astro-azure-swa-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "astro build",
+    "dev": "astro dev",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@opsydyn/astro-azure-swa": "workspace:*",
+    "astro": "^6.0.0"
+  }
+}

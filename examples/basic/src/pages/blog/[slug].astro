@@ -1,0 +1,20 @@
+---
+import "../../styles/global.css";
+
+const { slug } = Astro.params;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Blog {slug}</title>
+  </head>
+  <body>
+    <main>
+      <h1>Blog: {slug}</h1>
+      <p>This page verifies dynamic route params.</p>
+    </main>
+  </body>
+</html>

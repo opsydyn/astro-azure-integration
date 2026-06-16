@@ -1,0 +1,25 @@
+---
+import "../styles/global.css";
+
+const now = new Date().toISOString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Azure SWA Astro Example</title>
+  </head>
+  <body>
+    <main>
+      <h1>Azure SWA Astro Example</h1>
+      <p data-testid="render-time">Rendered at {now}</p>
+      <nav>
+        <a href="/about">About</a>
+        <a href="/blog/hello">Blog</a>
+        <a href="/api/health">Health</a>
+      </nav>
+    </main>
+  </body>
+</html>
