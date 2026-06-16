@@ -142,7 +142,7 @@ describe("basic Astro example build", () => {
       },
     );
 
-    await expectText("/blog/hello", 200, "Blog: hello");
+    await expectText("/blog/getting-started", 200, "Astro on Azure Static Web Apps");
     await expectText("/not-found", 404, "404");
 
     const serverIslandResponse = await fetchServerIsland("/");

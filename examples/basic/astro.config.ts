@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import azureSwa from "@opsydyn/astro-azure-swa";
 
@@ -7,5 +8,5 @@ export default defineConfig({
   adapter: azureSwa({
     apiRuntime: "node:22",
   }),
-  integrations: [react()],
+  integrations: [mdx(), react()],
 });

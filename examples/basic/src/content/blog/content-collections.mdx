@@ -1,0 +1,86 @@
+---
+title: "Type-safe Content with Astro Collections"
+description: "Using Astro's content layer, Zod schemas, and MDX to build a type-safe blog that's served from the CDN with prerender = true."
+pubDate: 2026-06-16
+author: "Alan Currie"
+tags: ["astro", "content-collections", "zod", "mdx", "typescript"]
+---
+
+Astro's content layer turns your markdown and MDX files into a type-safe data source. Zod validates every post's frontmatter at build time, so a typo in a date or a missing required field is a compile error, not a silent runtime bug.
+
+## Defining the schema
+
+```ts
+// src/content/config.ts
+import { defineCollection, z } from "astro:content";
+import { glob } from "astro/loaders";
+
+const blog = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/blog" }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    pubDate: z.coerce.date(),
+    author: z.string().default("Alan Currie"),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { blog };
+```
+
+`z.coerce.date()` converts the string `2026-06-16` in frontmatter to a proper `Date` object automatically. `z.string().default(...)` makes `author` optional with a fallback. Every field is reflected in TypeScript — `post.data.pubDate` is `Date`, not `string | unknown`.
+
+## The listing page
+
+```astro
+---
+// src/pages/blog/index.astro
+export const prerender = true;
+
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog", ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+<ul>
+  {posts.map(post => (
+    <li>
+      <a href={`/blog/${post.id}`}>{post.data.title}</a>
+      <time datetime={post.data.pubDate.toISOString()}>
+        {post.data.pubDate.toLocaleDateString("en-GB", { dateStyle: "long" })}
+      </time>
+    </li>
+  ))}
+</ul>
+```
+
+## The detail page
+
+```astro
+---
+// src/pages/blog/[slug].astro
+export const prerender = true;
+
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog", ({ data }) => !data.draft);
+  return posts.map(post => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+<article>
+  <h1>{post.data.title}</h1>
+  <Content />
+</article>
+```
+
+`render()` returns the compiled MDX/Markdown as a `Content` component. It's an Astro component, so you can pass `components` to override any HTML element with a custom component.
+
+## Why prerender?
+
+Blog posts are static content — they don't change per-request. Marking them `prerender = true` means they're built once and served from Azure SWA's CDN at CDN latency, with no function invocations. Combined with the `navigationFallback` routing, SWA serves them directly without hitting the function at all.

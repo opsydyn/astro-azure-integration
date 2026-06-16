@@ -1,0 +1,43 @@
+---
+title: "Astro on Azure Static Web Apps"
+description: "How to deploy a fully server-rendered Astro 6 site to Azure Static Web Apps using a custom adapter, with zero cold-start configuration."
+pubDate: 2026-06-16
+author: "Alan Currie"
+tags: ["astro", "azure", "swa", "adapter"]
+---
+
+Azure Static Web Apps (SWA) is Microsoft's CDN-first hosting platform. It bundles a global CDN, managed SSL, custom domains, GitHub Actions CI/CD, and serverless Azure Functions — all under a generous free tier.
+
+Astro 6 ships first-class adapter support, but the official adapter targets standalone Azure Functions rather than SWA's managed function model. This project fills that gap.
+
+## How it works
+
+The adapter hooks into Astro's `astro:build:done` lifecycle and generates the files SWA's deployment pipeline expects:
+
+- `dist/client/` — static assets uploaded to the CDN
+- `dist/client/staticwebapp.config.json` — routing rules
+- `dist/api/` — the Azure Functions entry point
+
+The managed function registers a single HTTP handler with route `{*path}`, capturing every non-API path and rendering it server-side. The function uses `x-ms-original-url` header (set by SWA's edge) to pass the real URL to Astro's renderer, so routing works identically to a standalone server.
+
+## What you get for free
+
+- **Global CDN** for static assets — `_astro/` files are cache-immutable
+- **Hybrid rendering** — pages with `export const prerender = true` are served from the CDN; everything else goes to the function
+- **Zero cold-start config** — the adapter sets `platform.apiRuntime: "node:22"` in `staticwebapp.config.json` automatically
+- **Astro Actions, server islands, middleware** — all work because the single function handles the full Astro runtime
+
+## Getting started
+
+```ts
+// astro.config.ts
+import { defineConfig } from "astro/config";
+import azureSwa from "@opsydyn/astro-azure-swa";
+
+export default defineConfig({
+  output: "server",
+  adapter: azureSwa(),
+});
+```
+
+Run `astro build` and deploy `dist/client` + `dist/api` to your SWA resource.

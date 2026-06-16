@@ -10,6 +10,7 @@
     "typecheck": "astro check"
   },
   "dependencies": {
+    "@astrojs/mdx": "^6.0.3",
     "@astrojs/react": "^5.0.7",
     "@opsydyn/astro-azure-swa": "workspace:*",
     "@types/react": "^19.2.17",

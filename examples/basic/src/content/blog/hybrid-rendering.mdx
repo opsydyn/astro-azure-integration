@@ -1,0 +1,68 @@
+---
+title: "Hybrid Rendering on Azure SWA"
+description: "Why the /* catch-all rewrite was the wrong approach for hybrid apps, and how SWA's navigationFallback fixes it."
+pubDate: 2026-06-16
+author: "Alan Currie"
+tags: ["astro", "azure", "swa", "hybrid", "routing"]
+---
+
+Astro's `output: "server"` mode is fully server-rendered by default, but individual pages can opt into static pre-rendering with `export const prerender = true`. This is Astro's *hybrid* mode.
+
+```astro
+---
+// src/pages/hybrid.astro
+export const prerender = true;
+---
+<h1>This page is built once and served from the CDN.</h1>
+```
+
+The pre-rendered HTML lands in `dist/client/hybrid/index.html` — a real static file, ready for the CDN to serve with zero function invocations and sub-millisecond latency.
+
+## The routing problem
+
+The first version of this adapter generated a `staticwebapp.config.json` with a `/*` catch-all rewrite:
+
+```json
+{
+  "routes": [
+    { "route": "/_astro/*", "headers": { "cache-control": "public, max-age=31536000, immutable" } },
+    { "route": "/*",        "rewrite": "/api/server" }
+  ]
+}
+```
+
+SWA processes route rules **before** it checks for static files. The `/*` rewrite was unconditional — it matched `/hybrid`, rewrote to `/api/server`, and the pre-rendered file was never consulted.
+
+The page worked (the function rendered it), but the CDN was completely bypassed.
+
+## The fix: navigationFallback
+
+SWA has a purpose-built mechanism for SSR fallback called `navigationFallback`. Unlike a route rewrite, it only fires when **no static file is found** at the requested path.
+
+```json
+{
+  "routes": [
+    { "route": "/_astro/*", "headers": { "cache-control": "..." } },
+    { "route": "/",         "rewrite": "/api/server" }
+  ],
+  "navigationFallback": {
+    "rewrite": "/api/server",
+    "exclude": ["/_astro/*"]
+  }
+}
+```
+
+With this config:
+
+| Path | Static file? | Result |
+|------|-------------|--------|
+| `/hybrid` | ✓ `hybrid/index.html` | CDN — zero function calls |
+| `/` | ✓ deploy placeholder | Explicit `/` rule → function |
+| `/about` | ✗ | `navigationFallback` → function |
+| `/_astro/foo.js` | ✓ | CDN with immutable cache headers |
+
+The explicit `/` rule is needed because the adapter writes an empty placeholder `index.html` to satisfy the SWA deploy action's "default file" validation check. Without the explicit rule, SWA would serve the empty placeholder for the homepage.
+
+## Lesson
+
+`routes` rewrites and `navigationFallback` are not interchangeable. A `routes` rewrite is a hard redirect — it overrides static file serving. `navigationFallback` is a last resort. For hybrid Astro apps, always use `navigationFallback`.

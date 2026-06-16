@@ -1,0 +1,59 @@
+---
+export const prerender = true;
+
+import "../../styles/global.css";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Blog — Azure SWA Astro Adapter</title>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Content collections · MDX · Zod</p>
+      <h1>Blog</h1>
+      <p>
+        These posts are pre-rendered at build time and served directly from
+        Azure SWA's CDN — no function invocations.
+      </p>
+      <nav aria-label="Back">
+        <a href="/">← Back to demo</a>
+      </nav>
+      <ul style="list-style:none;padding:0;margin-top:2rem;display:grid;gap:1rem;">
+        {
+          posts.map((post) => (
+            <li>
+              <a class="card" href={`/blog/${post.id}`}>
+                <span>{post.data.title}</span>
+                <p style="margin:0;font-size:.875rem;color:#475569;">
+                  {post.data.description}
+                </p>
+                <div style="display:flex;gap:.5rem;align-items:center;margin-top:.25rem;">
+                  <time
+                    datetime={post.data.pubDate.toISOString()}
+                    style="font-size:.8125rem;color:#64748b;"
+                  >
+                    {post.data.pubDate.toLocaleDateString("en-GB", {
+                      dateStyle: "long",
+                    })}
+                  </time>
+                  {post.data.tags.map((tag) => (
+                    <code>{tag}</code>
+                  ))}
+                </div>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </main>
+  </body>
+</html>

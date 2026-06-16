@@ -1,7 +1,19 @@
 ---
-import "../../styles/global.css";
+export const prerender = true;
 
-const { slug } = Astro.params;
+import "../../styles/global.css";
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog", ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
 ---
 
 <!doctype html>
@@ -9,12 +21,75 @@ const { slug } = Astro.params;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>Blog {slug}</title>
+    <title>{post.data.title} — Azure SWA Astro Adapter</title>
+    <meta name="description" content={post.data.description} />
   </head>
   <body>
     <main>
-      <h1>Blog: {slug}</h1>
-      <p>This page verifies dynamic route params.</p>
+      <nav aria-label="Back">
+        <a href="/blog">← All posts</a>
+      </nav>
+      <article style="margin-top:2rem;">
+        <header>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;">
+            {post.data.tags.map((tag) => <code>{tag}</code>)}
+          </div>
+          <h1>{post.data.title}</h1>
+          <p style="color:#475569;">{post.data.description}</p>
+          <p style="font-size:.8125rem;color:#64748b;">
+            By {post.data.author} ·{" "}
+            <time datetime={post.data.pubDate.toISOString()}>
+              {post.data.pubDate.toLocaleDateString("en-GB", {
+                dateStyle: "long",
+              })}
+            </time>
+          </p>
+        </header>
+        <hr style="border:none;border-top:1px solid #dbe3ef;margin:1.5rem 0;" />
+        <div class="prose">
+          <Content />
+        </div>
+      </article>
     </main>
   </body>
 </html>
+
+<style>
+  .prose :global(h2) {
+    margin-top: 2rem;
+    font-size: 1.25rem;
+  }
+  .prose :global(p) {
+    line-height: 1.75;
+    color: #334155;
+  }
+  .prose :global(pre) {
+    background: #1e293b;
+    border-radius: 0.375rem;
+    color: #e2e8f0;
+    overflow-x: auto;
+    padding: 1rem 1.25rem;
+  }
+  .prose :global(code:not(pre code)) {
+    background: #e8eef8;
+    border-radius: 0.25rem;
+    color: #1e293b;
+    padding: 0.125rem 0.375rem;
+  }
+  .prose :global(table) {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  .prose :global(th),
+  .prose :global(td) {
+    border: 1px solid #dbe3ef;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+  .prose :global(th) {
+    background: #f1f5f9;
+  }
+  .prose :global(a) {
+    color: #075985;
+  }
+</style>
