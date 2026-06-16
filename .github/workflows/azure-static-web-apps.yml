@@ -41,9 +41,6 @@ jobs:
       - name: Build adapter and example
         run: bun run build && bun run test:example
 
-      - name: Install API runtime dependencies
-        run: npm install --omit=dev --prefix examples/basic/dist/api
-
       - name: Verify deploy artifacts
         run: |
           test -f examples/basic/dist/client/index.html
@@ -51,10 +48,9 @@ jobs:
           test -f examples/basic/dist/api/host.json
           test -f examples/basic/dist/api/package.json
           test -f examples/basic/dist/api/server/index.mjs
-          test -d examples/basic/dist/api/node_modules/@azure/functions
-          test -d examples/basic/dist/api/node_modules/astro
+          grep -q '"react"' examples/basic/dist/api/package.json
           find examples/basic/dist/client -maxdepth 2 -type f | sort
-          find examples/basic/dist/api -path '*/node_modules/*' -prune -o -maxdepth 3 -type f -print | sort
+          find examples/basic/dist/api -maxdepth 3 -type f | sort
 
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
@@ -66,7 +62,6 @@ jobs:
           api_location: examples/basic/dist/api
           output_location: ""
           skip_app_build: true
-          skip_api_build: true
 
       - name: Smoke test production deployment
         run: |

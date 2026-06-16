@@ -1,4 +1,4 @@
-import { copyFile, cp, mkdir, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -6,6 +6,7 @@ export interface GenerateAzureSwaFilesOptions {
   apiRuntime?: AzureSwaApiRuntime;
   distDir: URL;
   functionName: string;
+  projectRoot?: URL;
   staticWebAppConfig?: AzureSwaStaticWebAppConfig;
 }
 
@@ -44,6 +45,7 @@ export async function generateAzureSwaFiles({
   apiRuntime,
   distDir,
   functionName,
+  projectRoot,
   staticWebAppConfig,
 }: GenerateAzureSwaFilesOptions): Promise<void> {
   const hookDirPath = fileURLToPath(distDir);
@@ -65,12 +67,19 @@ export async function generateAzureSwaFiles({
     },
   });
 
+  const projectDeps = await readProjectDependencies(projectRoot);
+
   await writeJson(join(apiPath, "package.json"), {
     type: "module",
     main: `${functionName}/index.mjs`,
     dependencies: {
-      "@azure/functions": "^4.0.0",
+      // Always required; project's astro version takes precedence if provided.
       astro: "^6.0.0",
+      // Merge project deps so framework packages (react, react-dom, etc.) are
+      // installed by Oryx at deploy time.
+      ...projectDeps,
+      // Always pin to our minimum required version.
+      "@azure/functions": "^4.0.0",
     },
   });
 
@@ -155,6 +164,25 @@ function mergeRoutes(
       ? [catchAllRoute]
       : []),
   ];
+}
+
+async function readProjectDependencies(
+  projectRoot: URL | undefined,
+): Promise<Record<string, string>> {
+  if (!projectRoot) return {};
+  try {
+    const pkgPath = join(fileURLToPath(projectRoot), "package.json");
+    const pkg = JSON.parse(await readFile(pkgPath, "utf8")) as {
+      dependencies?: Record<string, string>;
+    };
+    return Object.fromEntries(
+      Object.entries(pkg.dependencies ?? {}).filter(
+        ([, version]) => !String(version).startsWith("workspace:"),
+      ),
+    );
+  } catch {
+    return {};
+  }
 }
 
 function stripTrailingSeparator(path: string): string {

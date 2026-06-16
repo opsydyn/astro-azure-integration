@@ -19,10 +19,13 @@ export default function azureSwaAdapter(
 ): AstroIntegration {
   const functionName = options.functionName ?? "server";
 
+  let projectRoot: URL | undefined;
+
   return {
     name: ADAPTER_NAME,
     hooks: {
-      "astro:config:done": ({ setAdapter }) => {
+      "astro:config:done": ({ setAdapter, config }) => {
+        if (config?.root) projectRoot = config.root;
         setAdapter({
           name: ADAPTER_NAME,
           entrypointResolution: "auto",
@@ -46,6 +49,7 @@ export default function azureSwaAdapter(
           apiRuntime: options.apiRuntime,
           distDir: dir,
           functionName,
+          projectRoot,
           staticWebAppConfig: options.staticWebAppConfig,
         });
       },
