@@ -41,6 +41,21 @@ jobs:
       - name: Build adapter and example
         run: bun run build && bun run test:example
 
+      - name: Install API runtime dependencies
+        run: npm install --omit=dev --prefix examples/basic/dist/api
+
+      - name: Verify deploy artifacts
+        run: |
+          test -f examples/basic/dist/client/index.html
+          test -f examples/basic/dist/client/staticwebapp.config.json
+          test -f examples/basic/dist/api/host.json
+          test -f examples/basic/dist/api/package.json
+          test -f examples/basic/dist/api/server/index.mjs
+          test -d examples/basic/dist/api/node_modules/@azure/functions
+          test -d examples/basic/dist/api/node_modules/astro
+          find examples/basic/dist/client -maxdepth 2 -type f | sort
+          find examples/basic/dist/api -path '*/node_modules/*' -prune -o -maxdepth 3 -type f -print | sort
+
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
@@ -49,7 +64,24 @@ jobs:
           action: upload
           app_location: examples/basic/dist/client
           api_location: examples/basic/dist/api
+          output_location: ""
           skip_app_build: true
+          skip_api_build: true
+
+      - name: Smoke test production deployment
+        run: |
+          for attempt in $(seq 1 12); do
+            status="$(curl -sS -o /tmp/swa-health.json -w "%{http_code}" https://blue-wave-00d0bf30f.7.azurestaticapps.net/api/health || true)"
+            if [ "$status" = "200" ]; then
+              cat /tmp/swa-health.json
+              exit 0
+            fi
+            echo "Attempt $attempt: /api/health returned $status"
+            sleep 10
+          done
+          echo "Production /api/health did not return 200"
+          cat /tmp/swa-health.json || true
+          exit 1
 
   close_pull_request:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
