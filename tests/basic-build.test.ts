@@ -46,8 +46,12 @@ describe("basic Astro example build", () => {
 
     expect(config.routes[0].route).toBe("/_astro/*");
     expect(config.routes[1]).toEqual({
-      route: "/*",
+      route: "/",
       rewrite: "/api/server",
+    });
+    expect(config.navigationFallback).toEqual({
+      rewrite: "/api/server",
+      exclude: ["/_astro/*"],
     });
     expect(config.platform).toEqual({
       apiRuntime: "node:22",

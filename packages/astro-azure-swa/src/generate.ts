@@ -121,7 +121,13 @@ function createStaticWebAppConfig({
   functionName: string;
   staticWebAppConfig?: AzureSwaStaticWebAppConfig;
 }): AzureSwaStaticWebAppConfig {
-  return {
+  const userRoutes = staticWebAppConfig.routes ?? [];
+  // If the user provides a /* catch-all they are taking ownership of all routing;
+  // our generated / route and navigationFallback would be unreachable, so omit them.
+  const userOwnsWildcard = userRoutes.some(({ route }) => route === "/*");
+  const functionPath = `/api/${functionName}`;
+
+  const config: AzureSwaStaticWebAppConfig = {
     ...staticWebAppConfig,
     platform: {
       ...staticWebAppConfig.platform,
@@ -130,19 +136,30 @@ function createStaticWebAppConfig({
         staticWebAppConfig.platform?.apiRuntime ??
         DEFAULT_API_RUNTIME,
     },
-    routes: mergeRoutes(staticWebAppConfig.routes ?? [], [
+    routes: mergeRoutes(userRoutes, [
       {
         route: "/_astro/*",
-        headers: {
-          "cache-control": "public, max-age=31536000, immutable",
-        },
+        headers: { "cache-control": "public, max-age=31536000, immutable" },
       },
-      {
-        route: "/*",
-        rewrite: `/api/${functionName}`,
-      },
+      // Explicit root rewrite so the deploy-action placeholder index.html is never
+      // served to users; only added when a user /* rule won't make it unreachable.
+      ...(userOwnsWildcard ? [] : [{ route: "/", rewrite: functionPath }]),
     ]),
   };
+
+  // navigationFallback handles every SSR route that has no matching static file,
+  // enabling hybrid rendering (pre-rendered pages are served from CDN directly).
+  // Skipped when the user provides /* (they control all routing) or their own fallback.
+  if (!userOwnsWildcard) {
+    config.navigationFallback = staticWebAppConfig.navigationFallback ?? {
+      rewrite: functionPath,
+      exclude: ["/_astro/*"],
+    };
+  } else if (staticWebAppConfig.navigationFallback) {
+    config.navigationFallback = staticWebAppConfig.navigationFallback;
+  }
+
+  return config;
 }
 
 function mergeRoutes(
@@ -151,18 +168,16 @@ function mergeRoutes(
 ): AzureSwaRouteConfig[] {
   const customRoutePaths = new Set(customRoutes.map(({ route }) => route));
   const assetRoute = generatedRoutes.find(({ route }) => route === "/_astro/*");
-  const catchAllRoute = generatedRoutes.find(({ route }) => route === "/*");
+  const rootRoute = generatedRoutes.find(({ route }) => route === "/");
   const otherGeneratedRoutes = generatedRoutes.filter(
-    ({ route }) => route !== "/_astro/*" && route !== "/*" && !customRoutePaths.has(route),
+    ({ route }) => route !== "/_astro/*" && route !== "/" && !customRoutePaths.has(route),
   );
 
   return [
-    ...(assetRoute && !customRoutePaths.has(assetRoute.route) ? [assetRoute] : []),
+    ...(assetRoute && !customRoutePaths.has("/_astro/*") ? [assetRoute] : []),
     ...customRoutes,
     ...otherGeneratedRoutes,
-    ...(catchAllRoute && !customRoutePaths.has(catchAllRoute.route)
-      ? [catchAllRoute]
-      : []),
+    ...(rootRoute && !customRoutePaths.has("/") ? [rootRoute] : []),
   ];
 }
 

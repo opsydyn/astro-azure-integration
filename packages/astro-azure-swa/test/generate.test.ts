@@ -77,7 +77,7 @@ describe("generateAzureSwaFiles", () => {
     expect(bridge).toContain("function toAzureResponse");
   });
 
-  it("writes staticwebapp.config.json with asset caching and SSR rewrite", async () => {
+  it("writes staticwebapp.config.json with asset caching, root rewrite, and navigationFallback", async () => {
     await generateAzureSwaFiles({
       distDir: distUrl(),
       functionName: "server",
@@ -95,10 +95,14 @@ describe("generateAzureSwaFiles", () => {
           },
         },
         {
-          route: "/*",
+          route: "/",
           rewrite: "/api/server",
         },
       ],
+      navigationFallback: {
+        rewrite: "/api/server",
+        exclude: ["/_astro/*"],
+      },
     });
   });
 
@@ -180,14 +184,18 @@ describe("generateAzureSwaFiles", () => {
           allowedRoles: ["authenticated"],
         },
         {
-          route: "/*",
+          route: "/",
           rewrite: "/api/server",
         },
       ],
+      navigationFallback: {
+        rewrite: "/api/server",
+        exclude: ["/_astro/*"],
+      },
     });
   });
 
-  it("allows explicitly replacing the generated catch-all route", async () => {
+  it("suppresses generated / route and navigationFallback when user provides /*", async () => {
     await generateAzureSwaFiles({
       distDir: distUrl(),
       functionName: "server",
@@ -237,10 +245,14 @@ describe("generateAzureSwaFiles", () => {
       },
       routes: expect.arrayContaining([
         {
-          route: "/*",
+          route: "/",
           rewrite: "/api/server",
         },
       ]),
+      navigationFallback: {
+        rewrite: "/api/server",
+        exclude: ["/_astro/*"],
+      },
     });
   });
 
