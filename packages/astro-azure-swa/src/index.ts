@@ -21,6 +21,7 @@ export default function azureSwaAdapter(
           name: ADAPTER_NAME,
           entrypointResolution: "auto",
           serverEntrypoint: `${ADAPTER_NAME}/server`,
+          previewEntrypoint: `${ADAPTER_NAME}/preview`,
           supportedAstroFeatures: {
             staticOutput: "stable",
             serverOutput: "stable",

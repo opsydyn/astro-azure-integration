@@ -20,12 +20,31 @@ export default defineConfig({
 
 ## Local Development
 
+Use normal Astro commands. The adapter only generates Azure Static Web Apps
+and Azure Functions files during `astro build`; you do not need to run Azure
+Functions Core Tools or the SWA CLI for everyday development.
+
 ```bash
 bun install
-bun run check
+bun run --cwd examples/basic dev
+```
+
+From the repo root:
+
+```bash
+bun run dev
 ```
 
 ## Example
+
+Build and preview the example with Astro:
+
+```bash
+bun run test:example
+bun run --cwd examples/basic preview
+```
+
+For optional platform-fidelity testing with the Azure SWA CLI:
 
 ```bash
 bun run test:example
@@ -38,11 +57,16 @@ bunx @azure/static-web-apps-cli start ./examples/basic/dist/client --api-locatio
 ```txt
 dist/
 ├── client/
+│   ├── index.html
+│   └── staticwebapp.config.json
 ├── api/
 │   ├── host.json
 │   ├── package.json
 │   └── server/
 │       ├── chunks/
 │       └── index.mjs
-└── staticwebapp.config.json
+└── server/
 ```
+
+The Azure Function wrapper is generated output. User code continues to target
+Astro pages, endpoints, middleware, and standard Astro commands.
