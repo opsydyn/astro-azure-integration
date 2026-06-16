@@ -1,0 +1,23 @@
+{
+  "name": "astro-azure-adapter",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "scripts": {
+    "build": "bun run --cwd packages/astro-azure-swa build",
+    "typecheck": "bun run --cwd packages/astro-azure-swa typecheck",
+    "test": "vitest run",
+    "test:example": "bun run --cwd examples/basic build",
+    "check": "bun run typecheck && bun run build && bun run test && bun run test:example"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "astro": "^6.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.0.0"
+  }
+}
