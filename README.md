@@ -29,6 +29,7 @@ bun run check
 
 ```bash
 bun run test:example
+cd examples/basic/dist/api && bun install && cd ../../..
 bunx @azure/static-web-apps-cli start ./examples/basic/dist/client --api-location ./examples/basic/dist/api
 ```
 

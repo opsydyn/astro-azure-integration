@@ -52,7 +52,7 @@ describe("generateAzureSwaFiles", () => {
     });
   });
 
-  it("writes an Azure Functions v4 HTTP entrypoint and bridge", async () => {
+  it("writes an Azure Functions v4 HTTP entrypoint and bridge fallback", async () => {
     await generateAzureSwaFiles({
       distDir: distUrl(),
       functionName: "server",
@@ -77,22 +77,23 @@ describe("generateAzureSwaFiles", () => {
     expect(bridge).toContain("function toAzureResponse");
   });
 
-  it("writes staticwebapp.config.json with asset caching and SSR fallback", async () => {
+  it("writes staticwebapp.config.json with asset caching and SSR rewrite", async () => {
     await generateAzureSwaFiles({
       distDir: distUrl(),
       functionName: "server",
     });
 
     expect(await readJson("staticwebapp.config.json")).toEqual({
-      navigationFallback: {
-        rewrite: "/api/server",
-      },
       routes: [
         {
           route: "/_astro/*",
           headers: {
             "cache-control": "public, max-age=31536000, immutable",
           },
+        },
+        {
+          route: "/*",
+          rewrite: "/api/server",
         },
       ],
     });
@@ -110,9 +111,12 @@ describe("generateAzureSwaFiles", () => {
       main: "server/index.mjs",
     });
     expect(await readJson("staticwebapp.config.json")).toMatchObject({
-      navigationFallback: {
-        rewrite: "/api/server",
-      },
+      routes: expect.arrayContaining([
+        {
+          route: "/*",
+          rewrite: "/api/server",
+        },
+      ]),
     });
   });
 
@@ -120,7 +124,7 @@ describe("generateAzureSwaFiles", () => {
     await mkdir(join(root, "dist", "server", "chunks"), { recursive: true });
     await writeFile(
       join(root, "dist", "server", "entry.mjs"),
-      'import "./chunks/page.mjs";\napp.http("server", {});\n',
+      'import "./chunks/page.mjs";\nexport async function handleAzureSwaRequest() {}\n',
       "utf8",
     );
     await writeFile(
@@ -134,6 +138,9 @@ describe("generateAzureSwaFiles", () => {
       functionName: "server",
     });
 
+    await expect(
+      readFile(join(root, "dist", "api", "server", "index.mjs"), "utf8"),
+    ).resolves.toContain('from "./entry.mjs"');
     await expect(
       readFile(join(root, "dist", "api", "server", "index.mjs"), "utf8"),
     ).resolves.toContain('app.http("server"');

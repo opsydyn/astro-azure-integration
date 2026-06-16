@@ -62,6 +62,20 @@ describe("toWebRequest", () => {
     expect(webRequest.method).toBe("GET");
     expect(read).toBe(false);
   });
+
+  it("uses the original SWA URL when navigation fallback rewrites to the API route", async () => {
+    const request = await toWebRequest(
+      makeRequest({
+        url: "http://localhost:4280/api/server",
+        method: "GET",
+        headers: {
+          "x-ms-original-url": "http://localhost:4280/about",
+        },
+      }) as never,
+    );
+
+    expect(request.url).toBe("http://localhost:4280/about");
+  });
 });
 
 describe("toAzureResponse", () => {

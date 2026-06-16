@@ -13,8 +13,9 @@ export async function toWebRequest(request: HttpRequest): Promise<Request> {
   const body = BODYLESS_METHODS.has(method)
     ? undefined
     : await request.arrayBuffer();
+  const url = headers.get("x-ms-original-url") ?? request.url;
 
-  return new Request(request.url, {
+  return new Request(url, {
     method,
     headers,
     body,

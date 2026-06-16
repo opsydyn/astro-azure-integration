@@ -49,15 +49,16 @@ export async function generateAzureSwaFiles({
   await writeFunctionEntrypoint(distPath, functionPath, functionName);
 
   await writeJson(join(distPath, "staticwebapp.config.json"), {
-    navigationFallback: {
-      rewrite: `/api/${functionName}`,
-    },
     routes: [
       {
         route: "/_astro/*",
         headers: {
           "cache-control": "public, max-age=31536000, immutable",
         },
+      },
+      {
+        route: "/*",
+        rewrite: `/api/${functionName}`,
       },
     ],
   });
@@ -81,7 +82,12 @@ async function writeFunctionEntrypoint(
 
   try {
     await cp(serverPath, functionPath, { recursive: true });
-    await copyFile(serverEntrypoint, join(functionPath, "index.mjs"));
+    await copyFile(serverEntrypoint, join(functionPath, "entry.mjs"));
+    await writeFile(
+      join(functionPath, "index.mjs"),
+      renderAzureFunctionWrapper(functionName),
+      "utf8",
+    );
   } catch (error) {
     if (!isMissingFileError(error)) {
       throw error;
@@ -93,6 +99,19 @@ async function writeFunctionEntrypoint(
       "utf8",
     );
   }
+}
+
+function renderAzureFunctionWrapper(functionName: string): string {
+  return `import { app } from "@azure/functions";
+import { handleAzureSwaRequest } from "./entry.mjs";
+
+app.http(${JSON.stringify(functionName)}, {
+  methods: ${JSON.stringify(methods)},
+  authLevel: "anonymous",
+  route: "{*path}",
+  handler: handleAzureSwaRequest,
+});
+`;
 }
 
 function isMissingFileError(error: unknown): boolean {
@@ -138,8 +157,9 @@ export async function toWebRequest(request) {
   const body = BODYLESS_METHODS.has(method)
     ? undefined
     : await request.arrayBuffer();
+  const url = headers.get("x-ms-original-url") ?? request.url;
 
-  return new Request(request.url, {
+  return new Request(url, {
     method,
     headers,
     body,

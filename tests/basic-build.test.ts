@@ -31,8 +31,11 @@ describe("basic Astro example build", () => {
       await readFile(join(distDir, "staticwebapp.config.json"), "utf8"),
     );
 
-    expect(config.navigationFallback.rewrite).toBe("/api/server");
     expect(config.routes[0].route).toBe("/_astro/*");
+    expect(config.routes[1]).toEqual({
+      route: "/*",
+      rewrite: "/api/server",
+    });
 
     const entrypoint = await readFile(
       join(distDir, "api/server/index.mjs"),
@@ -40,6 +43,15 @@ describe("basic Astro example build", () => {
     );
 
     expect(entrypoint).toContain('app.http("server"');
-    expect(entrypoint).toContain("deserializeManifest");
+    expect(entrypoint).toContain('from "./entry.mjs"');
+    expect(entrypoint).not.toContain("@azure/functions-core");
+
+    const bundledEntry = await readFile(
+      join(distDir, "api/server/entry.mjs"),
+      "utf8",
+    );
+
+    expect(bundledEntry).toContain("handleAzureSwaRequest");
+    expect(bundledEntry).not.toContain("@azure/functions-core");
   });
 });
