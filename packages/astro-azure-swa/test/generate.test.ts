@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -96,5 +96,49 @@ describe("generateAzureSwaFiles", () => {
         },
       ],
     });
+  });
+
+  it("writes api files beside client when Astro passes dist/client as dir", async () => {
+    await mkdir(join(root, "dist", "client"), { recursive: true });
+
+    await generateAzureSwaFiles({
+      distDir: pathToFileURL(`${join(root, "dist", "client")}/`),
+      functionName: "server",
+    });
+
+    expect(await readJson("api/package.json")).toMatchObject({
+      main: "server/index.mjs",
+    });
+    expect(await readJson("staticwebapp.config.json")).toMatchObject({
+      navigationFallback: {
+        rewrite: "/api/server",
+      },
+    });
+  });
+
+  it("copies Astro's bundled server entry when it exists", async () => {
+    await mkdir(join(root, "dist", "server", "chunks"), { recursive: true });
+    await writeFile(
+      join(root, "dist", "server", "entry.mjs"),
+      'import "./chunks/page.mjs";\napp.http("server", {});\n',
+      "utf8",
+    );
+    await writeFile(
+      join(root, "dist", "server", "chunks", "page.mjs"),
+      "export const page = true;\n",
+      "utf8",
+    );
+
+    await generateAzureSwaFiles({
+      distDir: pathToFileURL(`${join(root, "dist", "client")}/`),
+      functionName: "server",
+    });
+
+    await expect(
+      readFile(join(root, "dist", "api", "server", "index.mjs"), "utf8"),
+    ).resolves.toContain('app.http("server"');
+    await expect(
+      readFile(join(root, "dist", "api", "server", "chunks", "page.mjs"), "utf8"),
+    ).resolves.toContain("page = true");
   });
 });

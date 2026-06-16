@@ -1,5 +1,5 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { copyFile, cp, mkdir, writeFile } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export interface GenerateAzureSwaFilesOptions {
@@ -13,7 +13,11 @@ export async function generateAzureSwaFiles({
   distDir,
   functionName,
 }: GenerateAzureSwaFilesOptions): Promise<void> {
-  const distPath = fileURLToPath(distDir);
+  const hookDirPath = fileURLToPath(distDir);
+  const distPath =
+    basename(stripTrailingSeparator(hookDirPath)) === "client"
+      ? dirname(stripTrailingSeparator(hookDirPath))
+      : hookDirPath;
   const apiPath = join(distPath, "api");
   const functionPath = join(apiPath, functionName);
 
@@ -38,12 +42,11 @@ export async function generateAzureSwaFiles({
   });
 
   await writeFile(
-    join(functionPath, "index.mjs"),
-    renderFunctionEntrypoint(functionName),
+    join(functionPath, "bridge.mjs"),
+    renderBridgeModule(),
     "utf8",
   );
-
-  await writeFile(join(functionPath, "bridge.mjs"), renderBridgeModule(), "utf8");
+  await writeFunctionEntrypoint(distPath, functionPath, functionName);
 
   await writeJson(join(distPath, "staticwebapp.config.json"), {
     navigationFallback: {
@@ -60,8 +63,45 @@ export async function generateAzureSwaFiles({
   });
 }
 
+function stripTrailingSeparator(path: string): string {
+  return path.endsWith("/") ? path.slice(0, -1) : path;
+}
+
 async function writeJson(path: string, value: unknown): Promise<void> {
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+async function writeFunctionEntrypoint(
+  distPath: string,
+  functionPath: string,
+  functionName: string,
+): Promise<void> {
+  const serverPath = join(distPath, "server");
+  const serverEntrypoint = join(serverPath, "entry.mjs");
+
+  try {
+    await cp(serverPath, functionPath, { recursive: true });
+    await copyFile(serverEntrypoint, join(functionPath, "index.mjs"));
+  } catch (error) {
+    if (!isMissingFileError(error)) {
+      throw error;
+    }
+
+    await writeFile(
+      join(functionPath, "index.mjs"),
+      renderFunctionEntrypoint(functionName),
+      "utf8",
+    );
+  }
+}
+
+function isMissingFileError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "ENOENT"
+  );
 }
 
 function renderFunctionEntrypoint(functionName: string): string {
