@@ -9,16 +9,30 @@
   "scripts": {
     "build": "bun run --cwd packages/astro-azure-swa build",
     "dev": "bun run build && bun run --cwd examples/basic dev",
-    "typecheck": "bun run --cwd packages/astro-azure-swa typecheck",
+    "typecheck": "bun run --cwd packages/astro-azure-swa typecheck && bun run --cwd examples/basic typecheck",
     "test": "vitest run",
     "test:example": "bun run --cwd examples/basic build",
+    "lint": "bun run --cwd packages/astro-azure-swa lint",
+    "lint:knip": "bun run --cwd packages/astro-azure-swa lint:knip",
+    "size": "bun run --cwd packages/astro-azure-swa size",
+    "changeset": "bun run --cwd packages/astro-azure-swa changeset",
+    "version": "bun run --cwd packages/astro-azure-swa version",
+    "release": "bun run --cwd packages/astro-azure-swa release",
     "check": "bun run typecheck && bun run build && bun run test && bun run test:example"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.3",
+    "@changesets/cli": "^2.31.0",
+    "@size-limit/file": "^12.1.0",
     "@types/node": "^22.0.0",
     "astro": "^6.0.0",
-    "tsup": "^8.0.0",
+    "knip": "^6.16.1",
+    "publint": "^0.3.21",
+    "size-limit": "^12.1.0",
+    "tsdown": "^0.22.1",
+    "typedoc": "^0.28.19",
     "typescript": "^5.9.0",
+    "unrun": "^0.3.1",
     "vitest": "^4.0.0"
   }
 }

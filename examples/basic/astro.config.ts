@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import react from "@astrojs/react";
 import azureSwa from "@opsydyn/astro-azure-swa";
 
 export default defineConfig({
@@ -6,4 +7,5 @@ export default defineConfig({
   adapter: azureSwa({
     apiRuntime: "node:22",
   }),
+  integrations: [react()],
 });

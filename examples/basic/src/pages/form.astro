@@ -1,0 +1,44 @@
+---
+import { actions } from "astro:actions";
+import "../styles/global.css";
+
+const result = Astro.getActionResult(actions.sampleForm);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Astro Actions form demo</title>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Actions</p>
+      <h1>Astro Actions form demo</h1>
+      <p>This form posts to an Astro Action instead of a hand-written API route.</p>
+      {
+        result?.data && (
+          <p class="result" data-testid="action-result">
+            {result.data.message}
+          </p>
+        )
+      }
+      {
+        result?.error && (
+          <p class="result" data-testid="action-error">
+            Action validation failed.
+          </p>
+        )
+      }
+      <form method="POST" action={actions.sampleForm}>
+        <label>
+          Payload
+          <input name="payload" value="form-body" />
+        </label>
+        <button type="submit">Submit action</button>
+      </form>
+    </main>
+  </body>
+</html>
+

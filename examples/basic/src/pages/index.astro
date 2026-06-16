@@ -1,7 +1,23 @@
 ---
 import "../styles/global.css";
+import ClientCounter from "../components/ClientCounter";
+import PersonalizedServerIsland from "../components/PersonalizedServerIsland.astro";
 
 const now = new Date().toISOString();
+const checks = [
+  ["/server", "SSR route"],
+  ["/hybrid", "Hybrid prerendered route"],
+  ["/middleware", "Middleware header"],
+  ["/env", "Environment variables"],
+  ["/api/health", "JSON API"],
+  ["/api/echo", "POST echo API"],
+  ["/form", "Form POST"],
+  ["/redirect", "Redirect + cookie"],
+  ["/cookies", "Multiple cookies"],
+  ["/auth", "Auth-like cookie flow"],
+  ["/blog/hello", "Dynamic route"],
+  ["/not-found", "Astro 404"],
+];
 ---
 
 <!doctype html>
@@ -9,17 +25,36 @@ const now = new Date().toISOString();
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>Azure SWA Astro Example</title>
+    <title>Azure SWA Astro Adapter Demo</title>
   </head>
   <body>
     <main>
-      <h1>Azure SWA Astro Example</h1>
-      <p data-testid="render-time">Rendered at {now}</p>
-      <nav>
-        <a href="/about">About</a>
-        <a href="/blog/hello">Blog</a>
-        <a href="/api/health">Health</a>
-      </nav>
+      <p class="eyebrow">Astro 6 on Azure Static Web Apps</p>
+      <h1>Azure SWA Astro Adapter Demo</h1>
+      <p data-testid="render-time">
+        Rendered at {now}. This app exercises the routes used to validate the
+        adapter locally and in Azure.
+      </p>
+      <section class="grid" aria-label="Adapter validation routes">
+        {
+          checks.map(([href, label]) => (
+            <a class="card" href={href}>
+              <span>{label}</span>
+              <code>{href}</code>
+            </a>
+          ))
+        }
+      </section>
+      <section class="showcase" aria-label="Astro island demos">
+        <ClientCounter client:load />
+        <PersonalizedServerIsland server:defer>
+          <section class="demo-panel" slot="fallback">
+            <p class="eyebrow">Server island</p>
+            <h2>Server island fallback</h2>
+            <p>Loading delayed server-rendered content.</p>
+          </section>
+        </PersonalizedServerIsland>
+      </section>
     </main>
   </body>
 </html>

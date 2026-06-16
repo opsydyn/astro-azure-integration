@@ -1,21 +1,110 @@
 :root {
   color-scheme: light;
   font-family: Inter, system-ui, sans-serif;
+  line-height: 1.5;
 }
 
 body {
   margin: 0;
-  background: #f7f7f8;
+  background: #f5f7fb;
   color: #171717;
 }
 
 main {
-  max-width: 48rem;
+  max-width: 64rem;
   margin: 4rem auto;
   padding: 0 1.5rem;
 }
 
 nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
+}
+
+a {
+  color: #075985;
+}
+
+code {
+  background: #e8eef8;
+  border-radius: 0.25rem;
+  color: #1e293b;
+  padding: 0.125rem 0.375rem;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  background: #0f766e;
+  border: 0;
+  border-radius: 0.375rem;
+  color: white;
+  cursor: pointer;
+  padding: 0.625rem 0.875rem;
+}
+
+input {
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  display: block;
+  margin: 0.375rem 0 1rem;
+  padding: 0.5rem 0.625rem;
+}
+
+.eyebrow {
+  color: #0f766e;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  margin-top: 2rem;
+}
+
+.showcase {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  margin-top: 2rem;
+}
+
+.card {
+  background: white;
+  border: 1px solid #dbe3ef;
+  border-radius: 0.5rem;
+  color: inherit;
+  display: grid;
+  gap: 0.375rem;
+  padding: 1rem;
+  text-decoration: none;
+}
+
+.card span {
+  font-weight: 700;
+}
+
+.demo-panel,
+.result {
+  background: white;
+  border: 1px solid #dbe3ef;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.demo-panel h2 {
+  margin-top: 0;
+}
+
+.result {
+  border-color: #99f6e4;
+  color: #115e59;
 }

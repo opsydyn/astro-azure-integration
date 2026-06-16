@@ -75,6 +75,11 @@ bun run test:example
 bun run --cwd examples/basic preview
 ```
 
+The example app is a high-fidelity adapter demo. It covers SSR, dynamic routes,
+hybrid prerendered pages, middleware, environment variables, JSON APIs, POST
+handlers, Astro Actions, React client islands, server islands, redirects,
+multiple cookies, an auth-like cookie flow, and Astro's 404 behavior.
+
 For optional platform-fidelity testing with the Azure SWA CLI:
 
 ```bash

@@ -12,6 +12,8 @@ This package should stay focused on a native Astro 6 adapter for Azure Static We
 - GitHub Actions workflow that builds the package and deploys the example from generated output.
 - Successful deployment: https://blue-wave-00d0bf30f.7.azurestaticapps.net/
 - Controlled SWA config extensibility through adapter-level `apiRuntime` and `staticWebAppConfig` options.
+- High-fidelity example app covering SSR, dynamic routes, hybrid prerendering, middleware, environment variables, API routes, POST handlers, Astro Actions, React client islands, server islands, redirects, multiple cookies, auth-like cookie flows, and Astro 404s.
+- Local preview validation for the same route set through `astro preview`.
 
 ## Recommended Next Changes
 
@@ -117,17 +119,6 @@ Recommendation:
 - Add a changelog.
 - Add release automation only after the API shape settles.
 - Keep `astro` as a peer dependency and test against Astro 6 minor releases.
-
-### More Example Coverage
-
-Add examples for:
-
-- Hybrid output.
-- Static output with server routes.
-- Middleware.
-- Environment variables.
-- Form actions.
-- Auth-like cookie flows.
 
 ### Azure Validation
 

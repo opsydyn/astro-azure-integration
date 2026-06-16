@@ -1,0 +1,23 @@
+---
+import "../styles/global.css";
+
+const now = new Date().toISOString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>SSR route</title>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">On-demand rendering</p>
+      <h1>SSR route</h1>
+      <p>This page is rendered by Astro at request time.</p>
+      <code>{now}</code>
+    </main>
+  </body>
+</html>
+

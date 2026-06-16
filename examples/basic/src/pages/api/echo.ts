@@ -1,10 +1,10 @@
 import type { APIRoute } from "astro";
 
 export const POST: APIRoute = async ({ request }) => {
-  const body = await request.text();
-
   return Response.json({
     method: request.method,
-    body,
+    body: await request.text(),
+    demoHeader: request.headers.get("x-demo"),
   });
 };
+

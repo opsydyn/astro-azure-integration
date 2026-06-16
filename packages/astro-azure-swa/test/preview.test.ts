@@ -78,6 +78,32 @@ export async function handleAzureSwaRequest() {
     }
   });
 
+  it("serves prerendered directory index routes from the client directory", async () => {
+    await mkdir(join(clientPath, "hybrid"), { recursive: true });
+    await writeFile(
+      join(clientPath, "hybrid", "index.html"),
+      "<h1>Hybrid prerendered route</h1>",
+      "utf8",
+    );
+    await writeServerEntrypoint(`
+export async function handleAzureSwaRequest() {
+  return { status: 500, body: "should not run" };
+}
+`);
+
+    const server = await createPreviewServer(previewParams() as never);
+    try {
+      const response = await fetch(`http://127.0.0.1:${server.port}/hybrid`);
+
+      expect(response.status).toBe(200);
+      await expect(response.text()).resolves.toContain(
+        "Hybrid prerendered route",
+      );
+    } finally {
+      await server.stop();
+    }
+  });
+
   it("forwards SSR requests to the built Azure SWA handler without Azure Functions", async () => {
     await writeServerEntrypoint(`
 export async function handleAzureSwaRequest(request) {
@@ -134,4 +160,3 @@ export async function handleAzureSwaRequest(request) {
     }
   });
 });
-

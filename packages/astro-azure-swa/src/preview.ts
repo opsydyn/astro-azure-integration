@@ -118,32 +118,21 @@ async function serveStaticFile(
     return false;
   }
 
-  const filePath = resolveClientFile(clientPath, pathname);
-  if (!filePath) {
+  const fileMatch = await resolveClientFile(clientPath, pathname);
+  if (!fileMatch) {
     return false;
   }
 
-  let fileStat;
-  try {
-    fileStat = await stat(filePath);
-  } catch {
-    return false;
-  }
-
-  if (!fileStat.isFile()) {
-    return false;
-  }
-
-  if (pathname === "/" && fileStat.size === 0) {
+  if (pathname === "/" && fileMatch.size === 0) {
     return false;
   }
 
   response.statusCode = 200;
   response.setHeader(
     "content-type",
-    MIME_TYPES[extname(filePath).toLowerCase()] ?? "application/octet-stream",
+    MIME_TYPES[extname(fileMatch.path).toLowerCase()] ?? "application/octet-stream",
   );
-  response.setHeader("content-length", fileStat.size);
+  response.setHeader("content-length", fileMatch.size);
 
   if (method === "HEAD") {
     response.end();
@@ -151,7 +140,7 @@ async function serveStaticFile(
   }
 
   await new Promise<void>((resolve, reject) => {
-    createReadStream(filePath)
+    createReadStream(fileMatch.path)
       .once("error", reject)
       .once("end", resolve)
       .pipe(response);
@@ -159,7 +148,10 @@ async function serveStaticFile(
   return true;
 }
 
-function resolveClientFile(clientPath: string, pathname: string): string | undefined {
+async function resolveClientFile(
+  clientPath: string,
+  pathname: string,
+): Promise<{ path: string; size: number } | undefined> {
   const decodedPath = decodeURIComponent(pathname);
   const relativePath = decodedPath === "/" ? "index.html" : decodedPath.slice(1);
   const normalizedPath = normalize(relativePath);
@@ -168,12 +160,33 @@ function resolveClientFile(clientPath: string, pathname: string): string | undef
     return undefined;
   }
 
-  const filePath = join(clientPath, normalizedPath);
-  if (relative(clientPath, filePath).startsWith("..")) {
+  const directPath = join(clientPath, normalizedPath);
+  if (relative(clientPath, directPath).startsWith("..")) {
     return undefined;
   }
 
-  return filePath;
+  const directMatch = await getFileMatch(directPath);
+  if (directMatch) {
+    return directMatch;
+  }
+
+  return getFileMatch(join(directPath, "index.html"));
+}
+
+async function getFileMatch(
+  filePath: string,
+): Promise<{ path: string; size: number } | undefined> {
+  try {
+    const fileStat = await stat(filePath);
+    if (fileStat.isFile()) {
+      return {
+        path: filePath,
+        size: fileStat.size,
+      };
+    }
+  } catch {
+    return undefined;
+  }
 }
 
 async function toPreviewHttpRequest(

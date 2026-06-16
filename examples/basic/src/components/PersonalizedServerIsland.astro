@@ -1,0 +1,13 @@
+---
+const now = new Date().toISOString();
+const authCookie = Astro.cookies.get("demo_auth")?.value ?? "anonymous";
+---
+
+<section class="demo-panel" data-demo="server-island">
+  <p class="eyebrow">Server island</p>
+  <h2>Server island rendered</h2>
+  <p>This content is rendered through <code>server:defer</code>.</p>
+  <p>Cookie context: <code>{authCookie}</code></p>
+  <p>Rendered at <code>{now}</code></p>
+</section>
+

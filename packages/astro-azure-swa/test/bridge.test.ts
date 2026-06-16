@@ -113,4 +113,41 @@ describe("toAzureResponse", () => {
       0, 1, 2, 255,
     ]);
   });
+
+  it("converts multiple Set-Cookie headers into Azure structured cookies", async () => {
+    const headers = new Headers();
+    headers.append(
+      "set-cookie",
+      "demo_session=alpha; Path=/; HttpOnly; SameSite=Lax",
+    );
+    headers.append(
+      "set-cookie",
+      "demo_theme=dark; Path=/; Max-Age=3600; SameSite=Lax",
+    );
+
+    const response = await toAzureResponse(
+      new Response("cookies", {
+        status: 200,
+        headers,
+      }),
+    );
+
+    expect(response.headers).not.toHaveProperty("set-cookie");
+    expect(response.cookies).toEqual([
+      {
+        name: "demo_session",
+        value: "alpha",
+        path: "/",
+        httpOnly: true,
+        sameSite: "Lax",
+      },
+      {
+        name: "demo_theme",
+        value: "dark",
+        path: "/",
+        maxAge: 3600,
+        sameSite: "Lax",
+      },
+    ]);
+  });
 });

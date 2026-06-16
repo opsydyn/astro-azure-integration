@@ -5,10 +5,21 @@
   "scripts": {
     "build": "astro build",
     "dev": "astro dev",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "sync": "astro sync",
+    "typecheck": "astro check"
   },
   "dependencies": {
+    "@astrojs/react": "^5.0.7",
     "@opsydyn/astro-azure-swa": "workspace:*",
-    "astro": "^6.0.0"
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "astro": "^6.0.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "typescript": "^6.0.3"
   }
 }
