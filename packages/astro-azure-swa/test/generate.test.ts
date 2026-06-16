@@ -37,7 +37,7 @@ describe("generateAzureSwaFiles", () => {
       version: "2.0",
       extensions: {
         http: {
-          routePrefix: "",
+          routePrefix: "api",
         },
       },
     });
