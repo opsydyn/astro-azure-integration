@@ -23,6 +23,10 @@ export const app = new Elysia({ prefix: "/api/elysia" })
       // dashboard always has data. 'off' would leave the cache empty until
       // the healthcheck is hit on the same instance — unreliable in serverless.
       startup: { mode: "report" },
+      // The @elysiajs/openapi JSON spec is at /openapi/json relative to the
+      // Elysia app, but the spectral plugin fetches it via app.handle() using
+      // the full path. With prefix /api/elysia the full path is /api/elysia/openapi/json.
+      source: { specPath: "/api/elysia/openapi/json" },
       healthcheck: { path: "/__lint" },
       dashboard: {},
     }),
