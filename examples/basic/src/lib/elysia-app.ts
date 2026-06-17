@@ -19,9 +19,7 @@ export const app = new Elysia({ prefix: "/api/elysia" })
   .use(
     spectralPlugin({
       preset: "recommended",
-      // Report mode runs lint at module-load time on every cold start so the
-      // dashboard always has data. 'off' would leave the cache empty until
-      // the healthcheck is hit on the same instance — unreliable in serverless.
+      // Report mode: log if lint exceeds threshold at startup, but don't fail.
       startup: { mode: "report" },
       // The @elysiajs/openapi JSON spec is at /openapi/json relative to the
       // Elysia app, but the spectral plugin fetches it via app.handle() using
@@ -69,3 +67,14 @@ export const app = new Elysia({ prefix: "/api/elysia" })
       },
     },
   );
+
+// Elysia only triggers onStart via app.listen() (Bun server mode). In Node.js
+// Azure Functions, app.handle() is used directly and onStart never fires.
+// The spectral plugin stores its host app reference in onStart, so without
+// triggering it the dashboard always returns 503.
+// We replicate what the Bun adapter does: iterate app.event.start and call
+// each handler with the app as context.
+type StartHandler = { fn: (ctx: typeof app) => unknown };
+const startHandlers: StartHandler[] =
+  (app as unknown as { event?: { start?: StartHandler[] } }).event?.start ?? [];
+await Promise.allSettled(startHandlers.map(({ fn }) => fn(app)));
