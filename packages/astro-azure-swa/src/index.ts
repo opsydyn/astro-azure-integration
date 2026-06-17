@@ -3,8 +3,11 @@ import type { AstroIntegration } from "astro";
 import {
   generateAzureSwaFiles,
   type AzureSwaApiRuntime,
+  type AzureSwaRouteConfig,
   type AzureSwaStaticWebAppConfig,
 } from "./generate.js";
+
+export type { AzureSwaRouteConfig, AzureSwaStaticWebAppConfig };
 
 const ADAPTER_NAME = "@opsydyn/astro-azure-swa";
 
