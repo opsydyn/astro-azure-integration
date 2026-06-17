@@ -143,6 +143,13 @@ describe("basic Astro example build", () => {
     );
 
     await expectText("/blog/getting-started", 200, "Astro on Azure Static Web Apps");
+    const hybridBlog = await previewFetch("/blog/hybrid-rendering");
+    expect(hybridBlog.status).toBe(200);
+    const hybridBlogHtml = await hybridBlog.text();
+    expect(hybridBlogHtml).toContain("Hybrid Rendering on Azure SWA");
+    expect(hybridBlogHtml).toContain("pre code");
+    expect(hybridBlogHtml).toContain("background:transparent");
+    expect(hybridBlogHtml).toContain("padding:0");
     await expectText("/not-found", 404, "404");
 
     const serverIslandResponse = await fetchServerIsland("/");
