@@ -1,6 +1,9 @@
-import { app } from "../../../lib/elysia-app.ts";
+import { app, ensureStarted } from "../../../lib/elysia-app.ts";
 
-const handle = ({ request }: { request: Request }) => app.handle(request);
+const handle = async ({ request }: { request: Request }) => {
+  await ensureStarted();
+  return app.handle(request);
+};
 
 export const GET = handle;
 export const POST = handle;

@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { openapi } from "@elysiajs/openapi";
+import { spectralPlugin } from "@opsydyn/elysia-spectral";
 
 export const app = new Elysia({ prefix: "/api/elysia" })
   .use(
@@ -13,6 +14,15 @@ export const app = new Elysia({ prefix: "/api/elysia" })
         },
         tags: [{ name: "demo", description: "Adapter demo routes" }],
       },
+    }),
+  )
+  .use(
+    spectralPlugin({
+      preset: "recommended",
+      source: { specPath: "/api/elysia/openapi/json" },
+      // "off" skips the startup lint but still sets hostAppRef so the
+      // dashboard and healthcheck routes work on demand
+      startup: { mode: "off" },
     }),
   )
   .get(
@@ -53,3 +63,19 @@ export const app = new Elysia({ prefix: "/api/elysia" })
       },
     },
   );
+
+// In Node.js serverless the Bun adapter never calls app.listen(), so onStart
+// lifecycle handlers never fire automatically. Call them once lazily so the
+// spectralPlugin's hostAppRef is initialised before any dashboard/healthcheck
+// request arrives.
+let _startPromise: Promise<void> | null = null;
+export const ensureStarted = (): Promise<void> => {
+  if (!_startPromise) {
+    type StartHandler = { fn: (a: typeof app) => unknown };
+    type AppWithEvents = typeof app & { event: { start: StartHandler[] } };
+    _startPromise = Promise.allSettled(
+      (app as AppWithEvents).event.start.map(({ fn }) => fn(app)),
+    ).then(() => {});
+  }
+  return _startPromise;
+};
