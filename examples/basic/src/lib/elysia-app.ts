@@ -20,8 +20,8 @@ export const app = new Elysia({ prefix: "/api/elysia" })
     spectralPlugin({
       preset: "recommended",
       source: { specPath: "/api/elysia/openapi/json" },
-      // "off" skips the startup lint but still sets hostAppRef so the
-      // dashboard and healthcheck routes work on demand
+      dashboard: {},
+      healthcheck: {},
       startup: { mode: "off" },
     }),
   )
