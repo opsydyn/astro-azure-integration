@@ -46,8 +46,7 @@
       "import": {
         "types": "./dist/preview.d.mts",
         "default": "./dist/preview.mjs"
-      },
-      "default": "./dist/preview.mjs"
+      }
     },
     "./package.json": "./package.json"
   },
