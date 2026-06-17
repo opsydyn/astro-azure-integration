@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      - name: Type Check
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Knip
+        run: bun run lint:knip
+
+      - name: API Docs Check
+        run: bun run --cwd packages/astro-azure-swa docs:api:check
+
+      - name: Run Tests
+        run: bun run test
+
+      - name: Build Example
+        run: bun run test:example
+
+      - name: Size Limit
+        run: bun run size
+
+      - name: Pack Dry Run
+        run: bun run --cwd packages/astro-azure-swa pack:dry-run
