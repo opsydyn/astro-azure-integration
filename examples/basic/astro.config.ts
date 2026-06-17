@@ -9,4 +9,9 @@ export default defineConfig({
     apiRuntime: "node:22",
   }),
   integrations: [mdx(), react()],
+  markdown: {
+    shikiConfig: {
+      theme: "github-dark",
+    },
+  },
 });

@@ -2,9 +2,7 @@
 
 A native Astro 6 adapter for Azure Static Web Apps.
 
-No Nitro. No H3. No runtime wrapper.
-
-Just Astro rendered through Azure Functions v4.
+No Nitro. No H3. No runtime wrapper. Just Astro's renderer and a thin bridge to Azure Functions v4 — the adapter handles routing config, hybrid pre-rendering, and the full deployment layout for SWA.
 
 ## Usage
 
