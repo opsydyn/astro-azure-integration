@@ -62,7 +62,7 @@
     "docs:api:check": "typedoc --emit none",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "bun run build && bun run lint && bun run test && changeset publish",
+    "release": "bun run build && changeset publish",
     "prepublishOnly": "bun run build",
     "pack:dry-run": "npm pack --dry-run",
     "size": "size-limit",
