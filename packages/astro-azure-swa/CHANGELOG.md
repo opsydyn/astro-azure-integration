@@ -1,5 +1,11 @@
 # @opsydyn/astro-azure-swa
 
+## 0.1.1
+
+### Patch Changes
+
+- 89a1164: Add package README with installation, configuration, hybrid pre-rendering, generated output, and local dev documentation.
+
 ## 0.1.0
 
 ### Minor Changes
