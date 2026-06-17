@@ -1,6 +1,5 @@
 import { Elysia, t } from "elysia";
 import { openapi } from "@elysiajs/openapi";
-import { spectralPlugin } from "@opsydyn/elysia-spectral";
 
 export const app = new Elysia({ prefix: "/api/elysia" })
   .use(
@@ -14,19 +13,6 @@ export const app = new Elysia({ prefix: "/api/elysia" })
         },
         tags: [{ name: "demo", description: "Adapter demo routes" }],
       },
-    }),
-  )
-  .use(
-    spectralPlugin({
-      preset: "recommended",
-      // Report mode: log if lint exceeds threshold at startup, but don't fail.
-      startup: { mode: "report" },
-      // The @elysiajs/openapi JSON spec is at /openapi/json relative to the
-      // Elysia app, but the spectral plugin fetches it via app.handle() using
-      // the full path. With prefix /api/elysia the full path is /api/elysia/openapi/json.
-      source: { specPath: "/api/elysia/openapi/json" },
-      healthcheck: { path: "/__lint" },
-      dashboard: {},
     }),
   )
   .get(
@@ -67,14 +53,3 @@ export const app = new Elysia({ prefix: "/api/elysia" })
       },
     },
   );
-
-// Elysia only triggers onStart via app.listen() (Bun server mode). In Node.js
-// Azure Functions, app.handle() is used directly and onStart never fires.
-// The spectral plugin stores its host app reference in onStart, so without
-// triggering it the dashboard always returns 503.
-// We replicate what the Bun adapter does: iterate app.event.start and call
-// each handler with the app as context.
-type StartHandler = { fn: (ctx: typeof app) => unknown };
-const startHandlers: StartHandler[] =
-  (app as unknown as { event?: { start?: StartHandler[] } }).event?.start ?? [];
-await Promise.allSettled(startHandlers.map(({ fn }) => fn(app)));
