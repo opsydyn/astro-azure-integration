@@ -1,6 +1,6 @@
 {
   "name": "@opsydyn/astro-azure-swa",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Native Astro 6 adapter for Azure Static Web Apps.",
   "author": "Alan Currie",
   "license": "MIT",
@@ -16,7 +16,13 @@
     "type": "github",
     "url": "https://github.com/sponsors/opsydyn"
   },
-  "keywords": ["astro", "astro-adapter", "azure", "static-web-apps", "serverless"],
+  "keywords": [
+    "astro",
+    "astro-adapter",
+    "azure",
+    "static-web-apps",
+    "serverless"
+  ],
   "sideEffects": false,
   "engines": {
     "node": ">=22.0.0"
@@ -51,7 +57,12 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "README.md", "LICENSE", "CHANGELOG.md"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
