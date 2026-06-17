@@ -19,9 +19,10 @@ const app = new Elysia({ prefix: "/api/elysia" })
   .use(
     spectralPlugin({
       preset: "recommended",
-      // Serverless: skip startup lint to avoid cold-start latency.
-      // Trigger via GET /api/elysia/__lint?fresh=1 instead.
-      startup: { mode: "off" },
+      // Warn mode runs lint at module-load time on every cold start so the
+      // dashboard always has data. 'off' would leave the cache empty until
+      // the healthcheck is hit on the same instance — unreliable in serverless.
+      startup: { mode: "warn" },
       healthcheck: { path: "/__lint" },
       dashboard: {},
     }),
