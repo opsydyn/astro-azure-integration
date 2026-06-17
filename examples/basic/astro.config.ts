@@ -11,7 +11,7 @@ export default defineConfig({
   integrations: [mdx(), react()],
   markdown: {
     shikiConfig: {
-      theme: "github-dark",
+      theme: "one-dark-pro",
     },
   },
 });
