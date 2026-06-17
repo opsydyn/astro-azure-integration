@@ -46,7 +46,8 @@
       "import": {
         "types": "./dist/preview.d.mts",
         "default": "./dist/preview.mjs"
-      }
+      },
+      "default": "./dist/preview.mjs"
     },
     "./package.json": "./package.json"
   },
@@ -56,7 +57,7 @@
     "dev": "tsdown --watch",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "prelint": "bun run build",
-    "lint": "publint && attw --pack . --ignore-rules no-resolution",
+    "lint": "publint && attw --pack . --ignore-rules no-resolution --ignore-rules cjs-resolves-to-esm",
     "lint:knip": "knip",
     "docs:api": "typedoc",
     "docs:api:check": "typedoc --emit none",

@@ -22,8 +22,8 @@ describe("azureSwaAdapter", () => {
     });
   });
 
-  it("exposes the preview entrypoint for Astro's require.resolve preview loader", () => {
-    expect(packageJson.exports["./preview"]).toMatchObject({
+  it("exposes preview via both import and default for Astro's createRequire.resolve path lookup", () => {
+    expect(packageJson.exports["./preview"]).toEqual({
       import: {
         types: "./dist/preview.d.mts",
         default: "./dist/preview.mjs",
