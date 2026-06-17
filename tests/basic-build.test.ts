@@ -106,6 +106,24 @@ describe("basic Astro example build", () => {
         body: "hello",
       },
     );
+    await expectJson("/api/elysia", 200, {
+      ok: true,
+      runtime: "azure-functions-v4",
+      adapter: "@opsydyn/astro-azure-swa",
+    });
+    await expectJson("/api/elysia/greet/swa", 200, {
+      greeting: "Hello, swa!",
+    });
+    await expectJson(
+      "/api/elysia/echo",
+      200,
+      { message: "hello from elysia" },
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: "hello from elysia" }),
+      },
+    );
     await expectText("/form", 200, "Astro Actions form demo");
     await expectText("/form", 200, "?_action=sampleForm");
     await expectActionResult(
