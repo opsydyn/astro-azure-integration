@@ -1,27 +1,28 @@
 ---
 import "../styles/global.css";
 import ClientCounter from "../components/ClientCounter";
+import FoldkitCounter from "../apps/foldkit-counter/app";
 import PersonalizedServerIsland from "../components/PersonalizedServerIsland.astro";
 
 const now = new Date().toISOString();
 const checks = [
-  ["/server", "SSR route"],
-  ["/hybrid", "Hybrid prerendered route"],
-  ["/middleware", "Middleware header"],
-  ["/env", "Environment variables"],
-  ["/api/health", "JSON API"],
-  ["/api/echo", "POST echo API"],
-  ["/api/elysia", "Elysia router"],
-  ["/api/elysia/greet/swa", "Elysia param route"],
-  ["/api/elysia/openapi", "Elysia OpenAPI (Scalar UI)"],
-  ["/api/elysia/__openapi/dashboard", "Elysia Spectral lint dashboard"],
-  ["/form", "Form POST"],
-  ["/redirect", "Redirect + cookie"],
-  ["/cookies", "Multiple cookies"],
-  ["/auth", "Auth-like cookie flow"],
-  ["/blog", "Blog (content collections)"],
-  ["/blog/getting-started", "Blog post (prerendered MDX)"],
-  ["/not-found", "Astro 404"],
+	["/server", "SSR route"],
+	["/hybrid", "Hybrid prerendered route"],
+	["/middleware", "Middleware header"],
+	["/env", "Environment variables"],
+	["/api/health", "JSON API"],
+	["/api/echo", "POST echo API"],
+	["/api/elysia", "Elysia router"],
+	["/api/elysia/greet/swa", "Elysia param route"],
+	["/api/elysia/openapi", "Elysia OpenAPI (Scalar UI)"],
+	["/api/elysia/__openapi/dashboard", "Elysia Spectral lint dashboard"],
+	["/form", "Form POST"],
+	["/redirect", "Redirect + cookie"],
+	["/cookies", "Multiple cookies"],
+	["/auth", "Auth-like cookie flow"],
+	["/blog", "Blog (content collections)"],
+	["/blog/getting-started", "Blog post (prerendered MDX)"],
+	["/not-found", "Astro 404"],
 ];
 ---
 
@@ -52,6 +53,7 @@ const checks = [
       </section>
       <section class="showcase" aria-label="Astro island demos">
         <ClientCounter client:load />
+        <FoldkitCounter client:load noMeta />
         <PersonalizedServerIsland server:defer>
           <section class="demo-panel" slot="fallback">
             <p class="eyebrow">Server island</p>
