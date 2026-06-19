@@ -3,6 +3,20 @@ import { openapi } from "@elysiajs/openapi";
 import { spectralPlugin } from "@opsydyn/elysia-spectral";
 
 export const app = new Elysia({ prefix: "/api/elysia" })
+  // Elysia's default 404 path clones one shared singleton Response per
+  // compiled handler with no concurrency guard: overlapping requests to any
+  // unmatched route race on the same underlying stream and corrupt it
+  // ("Response.clone: Body has already been consumed"), 500ing every
+  // unmatched request after the first collision for the life of the
+  // process. Registering onError routes 404s through app.handleError
+  // instead, which builds a fresh Response per request and sidesteps the
+  // shared singleton entirely.
+  .onError(({ code, set }) => {
+    if (code === "NOT_FOUND") {
+      set.status = 404;
+      return "Not Found";
+    }
+  })
   .use(
     openapi({
       documentation: {
@@ -63,6 +77,10 @@ export const app = new Elysia({ prefix: "/api/elysia" })
       },
     },
   );
+
+// Eden's treaty client infers request/response types from this type alone —
+// it is erased at build time, so no server code reaches the client bundle.
+export type App = typeof app;
 
 // In Node.js serverless the Bun adapter never calls app.listen(), so onStart
 // lifecycle handlers never fire automatically. Call them once lazily so the

@@ -135,6 +135,24 @@ Recommended checks:
 - Multiple cookies are preserved.
 - Unknown route returns Astro's expected 404.
 
+### Example App: Elysia Integration Showcase
+
+Make the Elysia + Astro + Azure Functions integration in the example app demonstrate more than route wiring.
+
+Why:
+
+- The example currently proves Elysia routes work behind the adapter, but every demo route is a static JSON response. Nothing shows the API and an Astro island talking to each other live.
+- The adapter's value is that a real API framework runs unmodified behind Azure Functions; an island that calls it and updates in the browser proves the round trip end-to-end, not just curl-ability.
+
+Recommendation, in order:
+
+1. ~~**Eden type-safe client island.**~~ Done. `EdenGreeter.tsx` calls the Elysia app through `@elysiajs/eden`'s treaty client, with request state managed by `effect`'s `Atom`/`AsyncResult.builder` instead of `useState`. Request/response types are inferred directly from the server route definitions, no manual typing or codegen step.
+2. **Fast follow — live request-stats dashboard island.** Add a small in-memory counter middleware to the Elysia app (requests by route, response times), expose it at `/api/elysia/stats`, and poll it from a client island to animate live numbers. Demonstrates that server state survives across invocations within a warm Function instance.
+3. CRUD island backed by Elysia (create/read/update/delete against an in-memory or Azure Table Storage-backed list), to show the full request lifecycle beyond GET.
+4. SSE/streaming demo (stretch, adapter-level work, not just example work). The response bridge currently buffers the whole body via `response.arrayBuffer()` before handing it to Azure Functions, so true streaming needs `bridge.ts` changed to pipe `response.body` instead. Worth doing only as a deliberate adapter feature addition, since it touches the core response path, not the example.
+
+**Incidental fix, found while building item 1**: Elysia's default 404 path shares one singleton `Response` object per compiled handler and clones it per-request with no concurrency guard. Concurrent requests to any unmatched route race on the same underlying stream and corrupt it (`Response.clone: Body has already been consumed`), 500ing every unmatched request after the first collision for the life of the process. Fixed in `elysia-app.ts` by registering an `onError` handler for `NOT_FOUND`, which routes 404s through `app.handleError` instead of the buggy shared-singleton path. Verified with 150 concurrent requests to unmatched routes, zero errors.
+
 ## Non-Goals
 
 - Do not add Nitro or H3.

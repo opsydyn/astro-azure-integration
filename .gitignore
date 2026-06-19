@@ -25,3 +25,4 @@ infra/*.tfplan
 # OS/editor noise
 .DS_Store
 nitro-main/
+effect-smol-main/

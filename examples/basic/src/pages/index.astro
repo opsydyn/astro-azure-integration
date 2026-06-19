@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import ClientCounter from "../components/ClientCounter";
+import EdenGreeter from "../components/EdenGreeter";
 import FoldkitCounter from "../apps/foldkit-counter/app";
 import PersonalizedServerIsland from "../components/PersonalizedServerIsland.astro";
 
@@ -54,6 +55,7 @@ const checks = [
       <section class="showcase" aria-label="Astro island demos">
         <ClientCounter client:load />
         <FoldkitCounter client:load noMeta />
+        <EdenGreeter client:load />
         <PersonalizedServerIsland server:defer>
           <section class="demo-panel" slot="fallback">
             <p class="eyebrow">Server island</p>

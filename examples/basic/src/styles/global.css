@@ -115,3 +115,27 @@ input {
   border-color: #99f6e4;
   color: #115e59;
 }
+
+.eden-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.eden-row input {
+  margin: 0;
+}
+
+.eden-row button {
+  width: 100%;
+}
+
+.eden-row span {
+  color: #115e59;
+  font-weight: 700;
+}
+
+.eden-error {
+  color: #b91c1c;
+}
