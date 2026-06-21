@@ -39,6 +39,8 @@ describe("basic Astro example build", () => {
     expect(existsSync(join(distDir, "api/server/index.mjs"))).toBe(true);
     expect(existsSync(join(distDir, "api/server/chunks"))).toBe(true);
     expect(existsSync(join(distDir, "client", "staticwebapp.config.json"))).toBe(true);
+    expect(existsSync(join(distDir, "client", "admin", "index.html"))).toBe(true);
+    expect(existsSync(join(distDir, "client", "admin", "config.yml"))).toBe(true);
 
     const config = JSON.parse(
       await readFile(join(distDir, "client", "staticwebapp.config.json"), "utf8"),
@@ -76,6 +78,8 @@ describe("basic Astro example build", () => {
 
     await startPreview();
 
+    await expectText("/admin/", 200, "Decap CMS");
+    await expectText("/admin/config.yml", 200, "name: github");
     await expectText("/", 200, "Azure SWA Astro Adapter Demo");
     await expectText("/", 200, "React client island");
     await expectText("/", 200, "Server island fallback");
