@@ -15,7 +15,7 @@ afterEach(() => {
 });
 
 describe("Decap GitHub OAuth routes", () => {
-  it("auth redirects with a space-delimited scope and state cookie", async () => {
+  it("auth redirects with the public repo scope and state cookie", async () => {
     process.env.GITHUB_OAUTH_CLIENT_ID = "client-id";
     process.env.GITHUB_REPO_PRIVATE = "0";
 
@@ -31,7 +31,7 @@ describe("Decap GitHub OAuth routes", () => {
     expect(authorizeUrl.searchParams.get("redirect_uri")).toBe(
       "https://example.test/api/oauth/callback",
     );
-    expect(authorizeUrl.searchParams.get("scope")).toBe("public_repo user");
+    expect(authorizeUrl.searchParams.get("scope")).toBe("public_repo");
 
     const state = authorizeUrl.searchParams.get("state");
     expect(state).toBeTruthy();
@@ -42,6 +42,57 @@ describe("Decap GitHub OAuth routes", () => {
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("SameSite=Lax");
     expect(cookie).toContain("Secure");
+  });
+
+  it('auth redirects with the repo scope when GITHUB_REPO_PRIVATE is "1"', async () => {
+    process.env.GITHUB_OAUTH_CLIENT_ID = "client-id";
+    process.env.GITHUB_REPO_PRIVATE = "1";
+
+    const response = authGet(routeContext("https://example.test/api/oauth/auth?provider=github"));
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+
+    const location = response.headers.get("location");
+    expect(location).toBeTruthy();
+    const authorizeUrl = new URL(location ?? "");
+    expect(authorizeUrl.searchParams.get("scope")).toBe("repo");
+  });
+
+  it("auth accepts an exact Decap scope query parameter", async () => {
+    process.env.GITHUB_OAUTH_CLIENT_ID = "client-id";
+    process.env.GITHUB_REPO_PRIVATE = "0";
+
+    const response = authGet(
+      routeContext("https://example.test/api/oauth/auth?provider=github&scope=repo"),
+    );
+
+    expect(response.status).toBe(302);
+
+    const location = response.headers.get("location");
+    expect(location).toBeTruthy();
+    const authorizeUrl = new URL(location ?? "");
+    expect(authorizeUrl.searchParams.get("scope")).toBe("repo");
+  });
+
+  it("auth rejects broader Decap scope query parameters", async () => {
+    process.env.GITHUB_OAUTH_CLIENT_ID = "client-id";
+
+    const broadScopeResponse = authGet(
+      routeContext("https://example.test/api/oauth/auth?provider=github&scope=repo%20user"),
+    );
+
+    expect(broadScopeResponse.status).toBe(400);
+    expect(broadScopeResponse.headers.get("cache-control")).toBe("no-store");
+    await expect(broadScopeResponse.text()).resolves.toContain("Unsupported GitHub OAuth scope");
+
+    const emptyScopeResponse = authGet(
+      routeContext("https://example.test/api/oauth/auth?provider=github&scope="),
+    );
+
+    expect(emptyScopeResponse.status).toBe(400);
+    expect(emptyScopeResponse.headers.get("cache-control")).toBe("no-store");
+    await expect(emptyScopeResponse.text()).resolves.toContain("Unsupported GitHub OAuth scope");
   });
 
   it("callback rejects missing and mismatched state before token exchange", async () => {

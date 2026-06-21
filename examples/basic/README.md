@@ -54,4 +54,6 @@ If the target repository is private, also set:
 GITHUB_REPO_PRIVATE=1
 ```
 
+Then change `backend.auth_scope` in `public/admin/config.yml` from `public_repo` to `repo`.
+
 The Decap config in `public/admin/config.yml` points at `opsydyn/astro-azure-integration` on `main`. Editors must have write access to that GitHub repository for Decap commits to succeed.

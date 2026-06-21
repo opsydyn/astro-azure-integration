@@ -6,6 +6,7 @@ backend:
   branch: main
   base_url: https://blue-wave-00d0bf30f.7.azurestaticapps.net
   auth_endpoint: api/oauth/auth
+  auth_scope: public_repo
 
 media_folder: examples/basic/public/uploads
 public_folder: /uploads
