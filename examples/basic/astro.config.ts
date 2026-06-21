@@ -8,6 +8,14 @@ export default defineConfig({
   output: "server",
   adapter: azureSwa({
     apiRuntime: "node:22",
+    staticWebAppConfig: {
+      routes: [
+        {
+          route: "/admin/*",
+          allowedRoles: ["authenticated"],
+        },
+      ],
+    },
   }),
   integrations: [mdx(), react(), foldkit()],
   vite: {

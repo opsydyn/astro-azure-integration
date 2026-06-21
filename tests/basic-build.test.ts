@@ -48,6 +48,10 @@ describe("basic Astro example build", () => {
 
     expect(config.routes[0].route).toBe("/_astro/*");
     expect(config.routes[1]).toEqual({
+      route: "/admin/*",
+      allowedRoles: ["authenticated"],
+    });
+    expect(config.routes[2]).toEqual({
       route: "/",
       rewrite: "/api/server",
     });
