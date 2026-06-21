@@ -36,7 +36,7 @@ describe("Decap GitHub OAuth routes", () => {
 
     const cookie = response.headers.get("set-cookie");
     expect(cookie).toContain(`decap_github_oauth_state=${state}`);
-    expect(cookie).toContain("Path=/api/oauth/callback");
+    expect(cookie).toContain("Path=/api/oauth;");
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("SameSite=Lax");
     expect(cookie).toContain("Secure");

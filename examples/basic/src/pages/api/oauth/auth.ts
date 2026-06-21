@@ -75,7 +75,7 @@ function getGithubScope(url: URL, repoIsPrivate: boolean): string | undefined {
 function createStateCookie(state: string, secure: boolean): string {
   const parts = [
     `${stateCookieName}=${state}`,
-    "Path=/api/oauth/callback",
+    "Path=/api/oauth",
     "HttpOnly",
     "SameSite=Lax",
   ];

@@ -187,7 +187,7 @@ function getCookie(request: Request, name: string): string | undefined {
 function clearStateCookie(secure: boolean): string {
   const parts = [
     `${stateCookieName}=`,
-    "Path=/api/oauth/callback",
+    "Path=/api/oauth",
     "Max-Age=0",
     "HttpOnly",
     "SameSite=Lax",
