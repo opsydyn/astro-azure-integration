@@ -2,7 +2,6 @@ import type { APIRoute } from "astro";
 
 const githubAuthorizeUrl = "https://github.com/login/oauth/authorize";
 const stateCookieName = "decap_github_oauth_state";
-const allowedScopes = new Set(["public_repo", "repo"]);
 
 export const GET: APIRoute = ({ request }) => {
   const url = new URL(request.url);
@@ -46,12 +45,13 @@ export const GET: APIRoute = ({ request }) => {
 
 function getGithubScope(url: URL, repoIsPrivate: boolean): string | undefined {
   const requestedScope = url.searchParams.get("scope");
+  const modeScope = repoIsPrivate ? "repo" : "public_repo";
 
   if (requestedScope !== null) {
-    return allowedScopes.has(requestedScope) ? requestedScope : undefined;
+    return requestedScope === modeScope ? requestedScope : undefined;
   }
 
-  return repoIsPrivate ? "repo" : "public_repo";
+  return modeScope;
 }
 
 function createStateCookie(state: string, secure: boolean): string {

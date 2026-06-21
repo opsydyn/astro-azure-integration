@@ -59,12 +59,12 @@ describe("Decap GitHub OAuth routes", () => {
     expect(authorizeUrl.searchParams.get("scope")).toBe("repo");
   });
 
-  it("auth accepts an exact Decap scope query parameter", async () => {
+  it("auth accepts public_repo as an exact Decap scope query parameter in public mode", async () => {
     process.env.GITHUB_OAUTH_CLIENT_ID = "client-id";
     process.env.GITHUB_REPO_PRIVATE = "0";
 
     const response = authGet(
-      routeContext("https://example.test/api/oauth/auth?provider=github&scope=repo"),
+      routeContext("https://example.test/api/oauth/auth?provider=github&scope=public_repo"),
     );
 
     expect(response.status).toBe(302);
@@ -72,7 +72,33 @@ describe("Decap GitHub OAuth routes", () => {
     const location = response.headers.get("location");
     expect(location).toBeTruthy();
     const authorizeUrl = new URL(location ?? "");
-    expect(authorizeUrl.searchParams.get("scope")).toBe("repo");
+    expect(authorizeUrl.searchParams.get("scope")).toBe("public_repo");
+  });
+
+  it("auth rejects repo as a Decap scope query parameter in public mode", async () => {
+    process.env.GITHUB_OAUTH_CLIENT_ID = "client-id";
+    process.env.GITHUB_REPO_PRIVATE = "0";
+
+    const response = authGet(
+      routeContext("https://example.test/api/oauth/auth?provider=github&scope=repo"),
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    await expect(response.text()).resolves.toContain("Unsupported GitHub OAuth scope");
+  });
+
+  it("auth rejects public_repo as a Decap scope query parameter in private mode", async () => {
+    process.env.GITHUB_OAUTH_CLIENT_ID = "client-id";
+    process.env.GITHUB_REPO_PRIVATE = "1";
+
+    const response = authGet(
+      routeContext("https://example.test/api/oauth/auth?provider=github&scope=public_repo"),
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    await expect(response.text()).resolves.toContain("Unsupported GitHub OAuth scope");
   });
 
   it("auth rejects broader Decap scope query parameters", async () => {
