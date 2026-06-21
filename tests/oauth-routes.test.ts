@@ -15,18 +15,16 @@ afterEach(() => {
 });
 
 describe("Decap GitHub OAuth routes", () => {
-  it("auth redirects with the public repo scope and state cookie", async () => {
+  it("auth returns a cookie-setting redirect page with the public repo scope", async () => {
     process.env.GITHUB_OAUTH_CLIENT_ID = "client-id";
     process.env.GITHUB_REPO_PRIVATE = "0";
 
     const response = authGet(routeContext("https://example.test/api/oauth/auth?provider=github"));
 
-    expect(response.status).toBe(302);
+    expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
 
-    const location = response.headers.get("location");
-    expect(location).toBeTruthy();
-    const authorizeUrl = new URL(location ?? "");
+    const authorizeUrl = await extractAuthorizeUrl(response);
     expect(authorizeUrl.searchParams.get("client_id")).toBe("client-id");
     expect(authorizeUrl.searchParams.get("redirect_uri")).toBe(
       "https://example.test/api/oauth/callback",
@@ -44,18 +42,16 @@ describe("Decap GitHub OAuth routes", () => {
     expect(cookie).toContain("Secure");
   });
 
-  it('auth redirects with the repo scope when GITHUB_REPO_PRIVATE is "1"', async () => {
+  it('auth returns a redirect page with the repo scope when GITHUB_REPO_PRIVATE is "1"', async () => {
     process.env.GITHUB_OAUTH_CLIENT_ID = "client-id";
     process.env.GITHUB_REPO_PRIVATE = "1";
 
     const response = authGet(routeContext("https://example.test/api/oauth/auth?provider=github"));
 
-    expect(response.status).toBe(302);
+    expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
 
-    const location = response.headers.get("location");
-    expect(location).toBeTruthy();
-    const authorizeUrl = new URL(location ?? "");
+    const authorizeUrl = await extractAuthorizeUrl(response);
     expect(authorizeUrl.searchParams.get("scope")).toBe("repo");
   });
 
@@ -67,11 +63,9 @@ describe("Decap GitHub OAuth routes", () => {
       routeContext("https://example.test/api/oauth/auth?provider=github&scope=public_repo"),
     );
 
-    expect(response.status).toBe(302);
+    expect(response.status).toBe(200);
 
-    const location = response.headers.get("location");
-    expect(location).toBeTruthy();
-    const authorizeUrl = new URL(location ?? "");
+    const authorizeUrl = await extractAuthorizeUrl(response);
     expect(authorizeUrl.searchParams.get("scope")).toBe("public_repo");
   });
 
@@ -238,6 +232,13 @@ function routeContext(url: string, headers?: HeadersInit) {
       headers,
     }),
   } as Parameters<typeof authGet>[0];
+}
+
+async function extractAuthorizeUrl(response: Response): Promise<URL> {
+  const html = await response.text();
+  const encodedLocation = html.match(/window\.location\.replace\("([^"]+)"\)/)?.[1];
+  expect(encodedLocation).toBeTruthy();
+  return new URL(JSON.parse(`"${encodedLocation}"`) as string);
 }
 
 function setOptionalEnv(key: string, value: string | undefined): void {

@@ -33,15 +33,33 @@ export const GET: APIRoute = ({ request }) => {
   authorizeUrl.searchParams.set("scope", scope);
   authorizeUrl.searchParams.set("state", state);
 
-  return new Response(null, {
-    status: 302,
+  return new Response(createRedirectHtml(authorizeUrl), {
+    status: 200,
     headers: {
-      location: authorizeUrl.toString(),
       "set-cookie": createStateCookie(state, url.protocol === "https:"),
+      "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",
     },
   });
 };
+
+function createRedirectHtml(authorizeUrl: URL): string {
+  const location = authorizeUrl.toString().replaceAll("<", "\\u003c");
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Authorizing with GitHub</title>
+  </head>
+  <body>
+    <p>Redirecting to GitHub...</p>
+    <script>
+      window.location.replace(${JSON.stringify(location)});
+    </script>
+  </body>
+</html>`;
+}
 
 function getGithubScope(url: URL, repoIsPrivate: boolean): string | undefined {
   const requestedScope = url.searchParams.get("scope");
