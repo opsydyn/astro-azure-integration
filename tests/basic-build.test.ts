@@ -84,6 +84,16 @@ describe("basic Astro example build", () => {
 
     await expectText("/admin/", 200, "Decap CMS");
     await expectText("/admin/config.yml", 200, "name: github");
+    await expectText(
+      "/api/oauth/auth?provider=github",
+      500,
+      "Missing GITHUB_OAUTH_CLIENT_ID",
+    );
+    await expectText(
+      "/api/oauth/callback?provider=github",
+      400,
+      "Missing GitHub OAuth code",
+    );
     await expectText("/", 200, "Azure SWA Astro Adapter Demo");
     await expectText("/", 200, "React client island");
     await expectText("/", 200, "Server island fallback");
