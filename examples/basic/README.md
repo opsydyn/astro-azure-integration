@@ -13,7 +13,7 @@ The dashboard is served from `/admin/` as static files in `public/admin`. The ad
 }
 ```
 
-Azure Static Web Apps authentication controls who can load the dashboard. Decap's GitHub backend still performs GitHub OAuth before it can read or write repository content.
+Azure Static Web Apps authentication controls who can load the dashboard. The `authenticated` role means any SWA-authenticated user can load `/admin/`; Decap's GitHub backend still performs GitHub OAuth, and GitHub repository permissions still gate content reads and writes.
 
 ## Local CMS Development
 
@@ -39,11 +39,13 @@ Create a GitHub OAuth app for the deployed Static Web App.
 - Homepage URL: `https://blue-wave-00d0bf30f.7.azurestaticapps.net`
 - Authorization callback URL: `https://blue-wave-00d0bf30f.7.azurestaticapps.net/api/oauth/callback`
 
+If you deploy your own copy, use your own deployed Static Web App origin for both GitHub OAuth URLs and update `backend.base_url` in `public/admin/config.yml` to that same origin.
+
 Add these Azure Static Web Apps application settings with the values from the GitHub OAuth app:
 
 ```text
-GITHUB_OAUTH_CLIENT_ID
-GITHUB_OAUTH_CLIENT_SECRET
+GITHUB_OAUTH_CLIENT_ID=<client-id>
+GITHUB_OAUTH_CLIENT_SECRET=<client-secret>
 ```
 
 If the target repository is private, also set:
