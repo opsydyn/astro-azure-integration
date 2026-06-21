@@ -1,9 +1,16 @@
 ---
-title: "Hybrid Rendering on Azure SWA"
-description: "Why the /* catch-all rewrite was the wrong approach for hybrid apps, and how SWA's navigationFallback fixes it."
+title: Hybrid Rendering on Azure SWA Edited
+description: Why the /* catch-all rewrite was the wrong approach for hybrid
+  apps, and how SWA's navigationFallback fixes it.
 pubDate: 2026-06-16
-author: "Alan Currie"
-tags: ["astro", "azure", "swa", "hybrid", "routing"]
+author: Alan Currie
+tags:
+  - astro
+  - azure
+  - swa
+  - hybrid
+  - routing
+draft: true
 ---
 
 Astro's `output: "server"` mode is fully server-rendered by default, but individual pages can opt into static pre-rendering with `export const prerender = true`. This is Astro's *hybrid* mode.
