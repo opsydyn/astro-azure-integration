@@ -47,7 +47,7 @@ jobs:
           test -f examples/basic/dist/client/staticwebapp.config.json
           test -f examples/basic/dist/client/admin/index.html
           test -f examples/basic/dist/client/admin/config.yml
-          grep -q '"/admin/*"' examples/basic/dist/client/staticwebapp.config.json
+          grep -Fq '"/admin/*"' examples/basic/dist/client/staticwebapp.config.json
           test -f examples/basic/dist/api/host.json
           test -f examples/basic/dist/api/package.json
           test -f examples/basic/dist/api/server/index.mjs
