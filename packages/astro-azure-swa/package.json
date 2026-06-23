@@ -1,6 +1,6 @@
 {
   "name": "@opsydyn/astro-azure-swa",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Native Astro 7 adapter for Azure Static Web Apps.",
   "author": "Alan Currie",
   "license": "MIT",
