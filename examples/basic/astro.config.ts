@@ -1,31 +1,32 @@
-import { defineConfig } from "astro/config";
+import { defineConfig, logHandlers } from "astro/config";
 import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import azureSwa from "@opsydyn/astro-azure-swa";
 import foldkit from "@opsydyn/astro-foldkit";
 
 export default defineConfig({
-  output: "server",
-  adapter: azureSwa({
-    apiRuntime: "node:22",
-    staticWebAppConfig: {
-      routes: [
-        {
-          route: "/admin/*",
-          allowedRoles: ["authenticated"],
-        },
-      ],
-    },
-  }),
-  integrations: [mdx(), react(), foldkit()],
-  vite: {
-    optimizeDeps: {
-      include: ["foldkit", "foldkit/html", "foldkit/message"],
-    },
-  },
-  markdown: {
-    shikiConfig: {
-      theme: "dracula",
-    },
-  },
+	output: "server",
+	logger: logHandlers.compose(logHandlers.console(), logHandlers.json()),
+	adapter: azureSwa({
+		apiRuntime: "node:22",
+		staticWebAppConfig: {
+			routes: [
+				{
+					route: "/admin/*",
+					allowedRoles: ["authenticated"],
+				},
+			],
+		},
+	}),
+	integrations: [mdx(), react(), foldkit()],
+	vite: {
+		optimizeDeps: {
+			include: ["foldkit", "foldkit/html", "foldkit/message"],
+		},
+	},
+	markdown: {
+		shikiConfig: {
+			theme: "dracula",
+		},
+	},
 });
