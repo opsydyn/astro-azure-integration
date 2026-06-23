@@ -184,7 +184,9 @@ describe("basic Astro example build", () => {
     const hybridBlogHtml = await hybridBlog.text();
     expect(hybridBlogHtml).toContain("Hybrid Rendering on Azure SWA");
     expect(hybridBlogHtml).toContain("pre code");
-    expect(hybridBlogHtml).toContain("background:transparent");
+    // Astro 7's CSS minifier rewrites `background:transparent` to the
+    // shorter, semantically identical `background:0 0` shorthand.
+    expect(hybridBlogHtml).toContain("background:0 0");
     expect(hybridBlogHtml).toContain("padding:0");
     await expectText("/not-found", 404, "404");
 
