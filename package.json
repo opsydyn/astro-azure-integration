@@ -25,7 +25,7 @@
     "@changesets/cli": "^2.31.0",
     "@size-limit/file": "^12.1.0",
     "@types/node": "^22.0.0",
-    "astro": "^6.0.0",
+    "astro": "^7.0.0",
     "knip": "^6.16.1",
     "publint": "^0.3.21",
     "size-limit": "^12.1.0",
