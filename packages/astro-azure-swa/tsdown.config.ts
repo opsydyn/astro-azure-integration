@@ -11,7 +11,7 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  target: "node22",
+  target: "node20",
   outDir: "dist",
   deps: {
     neverBundle: ["astro", "@azure/functions"],
