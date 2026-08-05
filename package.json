@@ -2,6 +2,7 @@
   "name": "astro-azure-adapter",
   "private": true,
   "type": "module",
+  "packageManager": "bun@1.3.11",
   "workspaces": [
     "packages/*",
     "examples/*"
@@ -18,7 +19,7 @@
     "changeset": "bun run --cwd packages/astro-azure-swa changeset",
     "version": "bun run --cwd packages/astro-azure-swa version",
     "release": "bun run --cwd packages/astro-azure-swa release",
-    "check": "bun run typecheck && bun run build && bun run test && bun run test:example"
+    "check": "bun run build && bun run typecheck && bun run test && bun run test:example"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.3",
