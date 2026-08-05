@@ -3,7 +3,7 @@
 **Scope:** `@opsydyn/astro-azure-swa`, the `examples/basic` deployment, CI/CD, Azure infrastructure, package release, and supporting documentation.
 
 **Created:** 2026-08-05
-**Status:** Planning
+**Status:** In progress
 **Owner:** Opsydyn
 
 This roadmap turns the project assessment into a checkable progression from a working production proof to a releaseable, reproducible, and defensible adapter. It is deliberately separate from [`ROADMAP.md`](./ROADMAP.md), which records the historical product direction and earlier decisions.
@@ -51,12 +51,12 @@ Every task should be completed with this record:
 This is an assessment snapshot, not a claim that every hardening item below is complete. Refresh drift-prone evidence before starting a release.
 
 - [x] The adapter and high-fidelity example build successfully after dependencies are installed and the adapter is built first.
-- [x] Vitest: 31/31 tests passed on 2026-08-02.
-- [x] Typecheck, publint, AreTheTypesWrong, Knip, API docs validation, size-limit, and package dry-run passed on 2026-08-02.
-- [x] The package entrypoint measured 2.57 kB Brotli against a 15 kB limit on 2026-08-02.
+- [x] Vitest: 36/36 tests passed on 2026-08-05, including the runtime-manifest and package-contract coverage.
+- [x] Typecheck, publint, AreTheTypesWrong, Knip, API docs validation, size-limit, and package dry-run passed on 2026-08-05.
+- [x] The package entrypoint measured 2.89 kB Brotli against a 15 kB limit on 2026-08-05.
 - [x] The documented production deployment returned 200 for the root, health endpoint, prerendered hybrid page, and Advanced Routing sample; an unknown route returned 404 on 2026-08-02.
 - [x] The worktree was clean at assessment time.
-- [ ] A clean-checkout invocation of the root `check` script is not yet reliable: the current script typechecks the example before building the workspace adapter it imports.
+- [x] A disposable clean-checkout invocation of the root `check` script passes after the adapter build is run first; the pre-fix archive reproduced the missing workspace `dist` export failure.
 - [ ] A dependency vulnerability audit is still outstanding; the advisory-service request was not run because the environment rejected the required dependency-graph egress.
 - [ ] Current package versions and live Azure behaviour must be refreshed before release because they are time-sensitive.
 
@@ -84,23 +84,23 @@ Do not advance a gate merely because a downstream phase has code on a branch. Th
 
 **Goal:** make the project’s quality signal deterministic from a clean checkout.
 
-- [ ] P0 `[repro]` Make the root `check` script clean-checkout safe by building the workspace adapter before example typechecking, or by using a supported workspace import path that does not require generated `dist` files.
+- [x] P0 `[repro]` Make the root `check` script clean-checkout safe by building the workspace adapter before example typechecking, or by using a supported workspace import path that does not require generated `dist` files.
   - Depends on: none
   - Acceptance: `bun install --frozen-lockfile` followed by `bun run check` passes from a checkout with build output removed.
-  - Evidence: clean temporary checkout log and exit code 0
-  - Verified: —
+  - Evidence: disposable archive `/var/folders/wv/3m5dhh6x5pv9w0fbfzymldnw0000gn/T/tmp.Xtaz27Dc1C`; `bun install --frozen-lockfile && env npm_config_cache=/private/tmp/astro-azure-npm-cache bun run check` exited 0 after 36 tests and the example build.
+  - Verified: 2026-08-05
 
-- [ ] P0 `[repro]` Define the canonical quality command and make its order explicit: build, typecheck, unit/integration tests, example build/preview, package lint, Knip, API docs, size, and pack validation.
+- [~] P0 `[repro]` Define the canonical quality command and make its order explicit: build, typecheck, unit/integration tests, example build/preview, package lint, Knip, API docs, size, and pack validation.
   - Depends on: clean-checkout-safe `check`
   - Acceptance: CI, release, and deployment workflows can invoke the same documented gate without duplicating hidden prerequisites.
-  - Evidence: root scripts and workflow references
-  - Verified: —
+  - Evidence: root `check` now has the deterministic build → typecheck → test → example-build order; the full package lint/Knip/docs/size/pack matrix passed separately on 2026-08-05. Reusable workflow wiring remains in the Phase 2 plan.
+  - Verified: 2026-08-05 (local gate; workflow wiring pending)
 
-- [ ] P1 `[repro]` Pin the Bun toolchain with a root `packageManager` declaration and a matching `oven-sh/setup-bun` version in workflows.
+- [~] P1 `[repro]` Pin the Bun toolchain with a root `packageManager` declaration and a matching `oven-sh/setup-bun` version in workflows.
   - Depends on: none
   - Acceptance: local and CI runs report the same Bun version; no workflow uses `bun-version: latest`.
-  - Evidence: workflow log and package manifest
-  - Verified: —
+  - Evidence: root `packageManager: "bun@1.3.11"`; all current verification runs used Bun 1.3.11. Workflow setup pin review remains in the Phase 2 plan.
+  - Verified: 2026-08-05 (manifest/local; workflow pending)
 
 - [ ] P1 `[repro]` Add a disposable clean-install verification path that checks the worktree remains clean after build, tests, preview, pack, and documentation generation.
   - Depends on: canonical quality command
@@ -116,32 +116,32 @@ Do not advance a gate merely because a downstream phase has code on a branch. Th
 
 ### Phase 0 exit gate — Gate A: local quality
 
-- [ ] `bun install --frozen-lockfile` succeeds from a clean checkout.
-- [ ] The canonical quality command passes with zero errors and zero warnings where the tool supports warnings.
-- [ ] The example preview suite can bind to loopback in the supported verification environment.
-- [ ] The worktree is clean after verification.
+- [x] `bun install --frozen-lockfile` succeeds from a clean checkout.
+- [~] The canonical quality command passes with zero errors and zero warnings where the tool supports warnings; package-quality commands are currently run as a separate matrix pending reusable workflow wiring.
+- [x] The example preview suite can bind to loopback in the supported verification environment.
+- [x] The worktree is clean after verification.
 
 ## Phase 1 — Adapter and generated-runtime correctness
 
 **Goal:** ensure the published adapter emits a runtime that matches the consuming Astro project and the selected Azure runtime.
 
-- [ ] P0 `[adapter]` Resolve the consuming Astro version from the project manifest and use it in generated `api/package.json`; remove the Astro 6 fallback from the Astro 7 package.
+- [x] P0 `[adapter]` Resolve the consuming Astro version from the project manifest and use it in generated `api/package.json`; remove the Astro 6 fallback from the Astro 7 package.
   - Depends on: Gate A
   - Acceptance: generated runtime dependency matches supported consumer Astro major/minor policy; a missing or incompatible Astro dependency fails the build with an actionable error.
-  - Evidence: generator tests for dependencies/devDependencies, invalid manifests, and Astro 7 output
-  - Verified: —
+  - Evidence: `packages/astro-azure-swa/test/generate.test.ts` covers runtime and devDependency Astro 7 declarations, missing/malformed manifests, Astro 6 rejection, and generated `astro: "7.0.0"`; the basic example asserts the same emitted version.
+  - Verified: 2026-08-05
 
-- [ ] P0 `[adapter]` Make project dependency discovery fail closed. Do not silently convert unreadable, malformed, or ambiguous `package.json` input into an empty runtime dependency set.
+- [x] P0 `[adapter]` Make project dependency discovery fail closed. Do not silently convert unreadable, malformed, or ambiguous `package.json` input into an empty runtime dependency set.
   - Depends on: Astro version resolution
   - Acceptance: the build reports the source path and reason when dependency resolution cannot be trusted.
-  - Evidence: failure-path tests and captured error output
-  - Verified: —
+  - Evidence: resolver failure-path tests assert actionable errors for missing Astro, Astro 6, malformed JSON, and the manifest path; workspace dependencies remain filtered and the adapter package is excluded.
+  - Verified: 2026-08-05
 
-- [ ] P0 `[adapter]` Decide the Node runtime contract: either support both `node:20` and `node:22` with matching build targets and CI coverage, or remove the Node 20 option in a documented breaking release.
+- [~] P0 `[adapter]` Decide the Node runtime contract: retain both `node:20` and `node:22` with a Node 20-compatible package/build target; the CI matrix remains a Phase 2 follow-up.
   - Depends on: Gate A
   - Acceptance: `engines`, TypeScript/tsdown target, generated config, package dependencies, and test matrix agree.
-  - Evidence: decision-log entry plus Node 20/22 verification or removed API option
-  - Verified: —
+  - Evidence: D-001 records the decision; `engines.node` is `>=20.0.0`, tsdown targets `node20`, the public type retains both runtime values, and the generated config tests cover node 20/22 selection. CI execution on both Node versions is not yet complete.
+  - Verified: 2026-08-05 (implementation; CI pending)
 
 - [ ] P1 `[adapter]` Generate a deterministic runtime dependency closure from the built server output, or document and enforce a narrowly defined alternative.
   - Depends on: Astro resolution and Node contract
@@ -175,10 +175,10 @@ Do not advance a gate merely because a downstream phase has code on a branch. Th
 
 ### Phase 1 exit gate — Gate B: package and consumer
 
-- [ ] Adapter package builds and typechecks from a clean checkout.
-- [ ] `publint`, AreTheTypesWrong, Knip, API docs, size-limit, and pack dry-run pass.
+- [x] Adapter package builds and typechecks from a clean checkout.
+- [x] `publint`, AreTheTypesWrong, Knip, API docs, size-limit, and pack dry-run pass.
 - [ ] A packed isolated consumer builds and runs the generated function entrypoint.
-- [ ] Generated `api/package.json`, `host.json`, routing config, and server files are inspected as deployment artifacts.
+- [x] Generated `api/package.json`, `host.json`, routing config, and server files are inspected as deployment artifacts.
 - [ ] The selected Node/Astro compatibility matrix is green.
 
 ## Phase 2 — CI/CD and release gates
@@ -391,7 +391,7 @@ These items should not delay the hardened release unless a decision explicitly p
 
 | ID | Decision or evidence required | Owner | Status | Link/date |
 | --- | --- | --- | --- | --- |
-| D-001 | Node 20 support versus Node 22-only contract | — | Open | — |
+| D-001 | Node 20 support versus Node 22-only contract | Codex | Decided; CI pending | 2026-08-05: retain both `node:20` and `node:22`; publish Node `>=20.0.0`, emit a Node 20-compatible target, and carry the Node 20/22 CI matrix into the Phase 2 CI/CD plan. |
 | D-002 | Generated runtime dependency closure strategy | — | Open | — |
 | D-003 | npm trusted publisher configuration | — | Open | — |
 | D-004 | Azure OIDC subject and least-privilege role model | — | Open | — |
