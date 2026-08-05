@@ -18,10 +18,19 @@ on:
 
 permissions:
   contents: read
+  deployments: read
   pull-requests: write
 
 jobs:
+  quality:
+    if: github.event_name != 'pull_request' || github.event.action != 'closed'
+    name: Quality Gate
+    uses: ./.github/workflows/quality.yml
+    permissions:
+      contents: read
+
   build_and_deploy:
+    needs: quality
     if: github.event_name != 'pull_request' || github.event.action != 'closed'
     runs-on: ubuntu-latest
     name: Build and Deploy
@@ -33,7 +42,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: "1.3.11"
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -56,6 +65,7 @@ jobs:
           find examples/basic/dist/api -maxdepth 3 -type f | sort
 
       - name: Deploy
+        id: deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
@@ -66,18 +76,89 @@ jobs:
           output_location: ""
           skip_app_build: true
 
-      - name: Smoke test production deployment
+      - name: Resolve preview URL
+        id: resolve_preview
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployments = await github.paginate(
+              github.rest.repos.listDeployments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha: context.sha,
+                per_page: 100,
+              },
+            );
+
+            deployments.sort((left, right) => {
+              return Date.parse(right.created_at) - Date.parse(left.created_at);
+            });
+
+            for (const deployment of deployments) {
+              const statuses = await github.paginate(
+                github.rest.repos.listDeploymentStatuses,
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  deployment_id: deployment.id,
+                  per_page: 100,
+                },
+              );
+              const status = statuses.find(
+                ({ state, environment_url }) =>
+                  state === "success" && Boolean(environment_url),
+              );
+
+              if (status?.environment_url) {
+                const url = status.environment_url.replace(/\/+$/, "");
+                core.info("Using preview deployment " + deployment.id + " at " + url);
+                core.setOutput("url", url);
+                return;
+              }
+            }
+
+            core.setFailed(
+              "No successful preview deployment URL found for " + context.sha,
+            );
+
+      - name: Select smoke target
+        id: smoke_target
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PREVIEW_URL: ${{ steps.resolve_preview.outputs.url }}
+          PRODUCTION_URL: https://blue-wave-00d0bf30f.7.azurestaticapps.net
         run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            case "$PREVIEW_URL" in
+              https://*) ;;
+              *)
+                echo "No HTTPS preview URL was resolved for $GITHUB_SHA"
+                exit 1
+                ;;
+            esac
+            printf 'base_url=%s\n' "$PREVIEW_URL" >> "$GITHUB_OUTPUT"
+          else
+            printf 'base_url=%s\n' "$PRODUCTION_URL" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Smoke test deployment
+        env:
+          SMOKE_BASE_URL: ${{ steps.smoke_target.outputs.base_url }}
+        run: |
+          test -n "$SMOKE_BASE_URL"
           for attempt in $(seq 1 12); do
-            status="$(curl -sS -o /tmp/swa-health.json -w "%{http_code}" https://blue-wave-00d0bf30f.7.azurestaticapps.net/api/health || true)"
+            status="$(curl -sS -o /tmp/swa-health.json -w "%{http_code}" "$SMOKE_BASE_URL/api/health" || true)"
             if [ "$status" = "200" ]; then
+              echo "Smoke target: $SMOKE_BASE_URL"
               cat /tmp/swa-health.json
               exit 0
             fi
-            echo "Attempt $attempt: /api/health returned $status"
+            echo "Attempt $attempt: $SMOKE_BASE_URL/api/health returned $status"
             sleep 10
           done
-          echo "Production /api/health did not return 200"
+          echo "Deployment /api/health did not return 200 at $SMOKE_BASE_URL"
           cat /tmp/swa-health.json || true
           exit 1
 
