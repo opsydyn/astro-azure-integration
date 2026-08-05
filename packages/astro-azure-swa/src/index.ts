@@ -48,6 +48,12 @@ export default function azureSwaAdapter(
         });
       },
       "astro:build:done": async ({ dir }) => {
+        if (!projectRoot) {
+          throw new Error(
+            `${ADAPTER_NAME} could not determine the Astro project root before build completion`,
+          );
+        }
+
         await generateAzureSwaFiles({
           apiRuntime: options.apiRuntime,
           distDir: dir,

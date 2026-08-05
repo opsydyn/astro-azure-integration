@@ -6,7 +6,7 @@ export interface GenerateAzureSwaFilesOptions {
   apiRuntime?: AzureSwaApiRuntime;
   distDir: URL;
   functionName: string;
-  projectRoot?: URL;
+  projectRoot: URL;
   staticWebAppConfig?: AzureSwaStaticWebAppConfig;
 }
 
@@ -39,6 +39,7 @@ export interface AzureSwaRouteConfig {
 }
 
 const DEFAULT_API_RUNTIME: AzureSwaApiRuntime = "node:22";
+const ADAPTER_PACKAGE_NAME = "@opsydyn/astro-azure-swa";
 const methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"];
 
 export async function generateAzureSwaFiles({
@@ -67,14 +68,12 @@ export async function generateAzureSwaFiles({
     },
   });
 
-  const projectDeps = await readProjectDependencies(projectRoot);
+  const projectDeps = await resolveProjectRuntimeDependencies(projectRoot);
 
   await writeJson(join(apiPath, "package.json"), {
     type: "module",
     main: `${functionName}/index.mjs`,
     dependencies: {
-      // Always required; project's astro version takes precedence if provided.
-      astro: "^6.0.0",
       // Merge project deps so framework packages (react, react-dom, etc.) are
       // installed by Oryx at deploy time.
       ...projectDeps,
@@ -181,23 +180,70 @@ function mergeRoutes(
   ];
 }
 
-async function readProjectDependencies(
-  projectRoot: URL | undefined,
+interface ProjectPackageJson {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
+}
+
+async function resolveProjectRuntimeDependencies(
+  projectRoot: URL,
 ): Promise<Record<string, string>> {
-  if (!projectRoot) return {};
+  const pkgPath = join(fileURLToPath(projectRoot), "package.json");
+  let packageText: string;
+
   try {
-    const pkgPath = join(fileURLToPath(projectRoot), "package.json");
-    const pkg = JSON.parse(await readFile(pkgPath, "utf8")) as {
-      dependencies?: Record<string, string>;
-    };
-    return Object.fromEntries(
-      Object.entries(pkg.dependencies ?? {}).filter(
-        ([, version]) => !String(version).startsWith("workspace:"),
-      ),
-    );
-  } catch {
-    return {};
+    packageText = await readFile(pkgPath, "utf8");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Could not read ${pkgPath}: ${message}`);
   }
+
+  let pkg: ProjectPackageJson;
+  try {
+    pkg = JSON.parse(packageText) as ProjectPackageJson;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Could not parse ${pkgPath}: ${message}`);
+  }
+
+  const runtimeDependencies = {
+    ...(pkg.optionalDependencies ?? {}),
+    ...(pkg.dependencies ?? {}),
+  };
+  const astroDeclaration =
+    runtimeDependencies.astro ?? pkg.devDependencies?.astro;
+
+  if (!astroDeclaration) {
+    throw new Error(
+      `Could not resolve an Astro 7 dependency from ${pkgPath}; declare astro in dependencies, optionalDependencies, or devDependencies.`,
+    );
+  }
+
+  const major = String(astroDeclaration).match(/\d+/)?.[0];
+  if (!major) {
+    throw new Error(
+      `Astro dependency declaration "${astroDeclaration}" in ${pkgPath} does not identify a major; expected Astro ^7.0.0.`,
+    );
+  }
+
+  if (Number(major) !== 7) {
+    throw new Error(
+      `Astro dependency declaration "${astroDeclaration}" in ${pkgPath} is unsupported; expected Astro 7 (^7.0.0).`,
+    );
+  }
+
+  const resolvedDependencies = Object.fromEntries(
+    Object.entries(runtimeDependencies).filter(
+      ([name, version]) =>
+        name === "astro" ||
+        (name !== ADAPTER_PACKAGE_NAME &&
+          !String(version).startsWith("workspace:")),
+    ),
+  );
+
+  resolvedDependencies.astro = String(astroDeclaration);
+  return resolvedDependencies;
 }
 
 function stripTrailingSeparator(path: string): string {

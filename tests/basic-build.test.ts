@@ -42,6 +42,11 @@ describe("basic Astro example build", () => {
     expect(existsSync(join(distDir, "client", "admin", "index.html"))).toBe(true);
     expect(existsSync(join(distDir, "client", "admin", "config.yml"))).toBe(true);
 
+    const generatedPackage = JSON.parse(
+      await readFile(join(distDir, "api/package.json"), "utf8"),
+    ) as { dependencies?: { astro?: string } };
+    expect(generatedPackage.dependencies?.astro).toBe("7.0.0");
+
     const config = JSON.parse(
       await readFile(join(distDir, "client", "staticwebapp.config.json"), "utf8"),
     );

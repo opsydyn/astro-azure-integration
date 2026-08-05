@@ -12,6 +12,12 @@ let root: string;
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), "astro-azure-swa-"));
   await mkdir(join(root, "dist", "client"), { recursive: true });
+  await writeProjectPackage({
+    dependencies: {
+      astro: "7.0.0",
+      react: "19.2.7",
+    },
+  });
 });
 
 afterEach(async () => {
@@ -20,6 +26,24 @@ afterEach(async () => {
 
 function distUrl(): URL {
   return pathToFileURL(`${join(root, "dist")}/`);
+}
+
+function projectRootUrl(): URL {
+  return pathToFileURL(`${root}/`);
+}
+
+async function writeProjectPackage(
+  overrides: {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    optionalDependencies?: Record<string, string>;
+  },
+): Promise<void> {
+  await writeFile(
+    join(root, "package.json"),
+    `${JSON.stringify({ name: "fixture-app", ...overrides }, null, 2)}\n`,
+    "utf8",
+  );
 }
 
 async function readJson(path: string): Promise<unknown> {
@@ -31,6 +55,7 @@ describe("generateAzureSwaFiles", () => {
     await generateAzureSwaFiles({
       distDir: distUrl(),
       functionName: "server",
+      projectRoot: projectRootUrl(),
     });
 
     expect(await readJson("api/host.json")).toEqual({
@@ -47,15 +72,69 @@ describe("generateAzureSwaFiles", () => {
       main: "server/index.mjs",
       dependencies: {
         "@azure/functions": "^4.0.0",
-        "astro": "^6.0.0",
+        astro: "7.0.0",
+        react: "19.2.7",
       },
     });
+  });
+
+  it("uses Astro from devDependencies when it is not a runtime dependency", async () => {
+    await writeProjectPackage({
+      devDependencies: { astro: "7.1.6" },
+    });
+
+    await generateAzureSwaFiles({
+      distDir: distUrl(),
+      functionName: "server",
+      projectRoot: projectRootUrl(),
+    });
+
+    await expect(readJson("api/package.json")).resolves.toMatchObject({
+      dependencies: { astro: "7.1.6" },
+    });
+  });
+
+  it("rejects a missing Astro dependency", async () => {
+    await writeProjectPackage({ dependencies: { react: "19.2.7" } });
+
+    await expect(
+      generateAzureSwaFiles({
+        distDir: distUrl(),
+        functionName: "server",
+        projectRoot: projectRootUrl(),
+      }),
+    ).rejects.toThrow(/Astro 7 dependency/i);
+  });
+
+  it("rejects an Astro 6 dependency", async () => {
+    await writeProjectPackage({ dependencies: { astro: "6.0.0" } });
+
+    await expect(
+      generateAzureSwaFiles({
+        distDir: distUrl(),
+        functionName: "server",
+        projectRoot: projectRootUrl(),
+      }),
+    ).rejects.toThrow(/Astro 7/i);
+  });
+
+  it("reports malformed project manifests", async () => {
+    await writeFile(join(root, "package.json"), "{\n", "utf8");
+
+    await expect(
+      generateAzureSwaFiles({
+        distDir: distUrl(),
+        functionName: "server",
+        projectRoot: projectRootUrl(),
+      }),
+    ).rejects.toThrow(/package.json/i);
   });
 
   it("writes an Azure Functions v4 HTTP entrypoint and bridge fallback", async () => {
     await generateAzureSwaFiles({
       distDir: distUrl(),
       functionName: "server",
+      projectRoot: projectRootUrl(),
     });
 
     const index = await readFile(
@@ -81,6 +160,7 @@ describe("generateAzureSwaFiles", () => {
     await generateAzureSwaFiles({
       distDir: distUrl(),
       functionName: "server",
+      projectRoot: projectRootUrl(),
     });
 
     expect(await readJson("client/staticwebapp.config.json")).toEqual({
@@ -110,6 +190,7 @@ describe("generateAzureSwaFiles", () => {
     await generateAzureSwaFiles({
       distDir: distUrl(),
       functionName: "server",
+      projectRoot: projectRootUrl(),
       apiRuntime: "node:20",
     });
 
@@ -124,6 +205,7 @@ describe("generateAzureSwaFiles", () => {
     await generateAzureSwaFiles({
       distDir: distUrl(),
       functionName: "server",
+      projectRoot: projectRootUrl(),
       staticWebAppConfig: {
         platform: {
           apiRuntime: "node:20",
@@ -142,6 +224,7 @@ describe("generateAzureSwaFiles", () => {
     await generateAzureSwaFiles({
       distDir: distUrl(),
       functionName: "server",
+      projectRoot: projectRootUrl(),
       staticWebAppConfig: {
         globalHeaders: {
           "x-powered-by": "astro",
@@ -199,6 +282,7 @@ describe("generateAzureSwaFiles", () => {
     await generateAzureSwaFiles({
       distDir: distUrl(),
       functionName: "server",
+      projectRoot: projectRootUrl(),
       staticWebAppConfig: {
         routes: [
           {
@@ -234,6 +318,7 @@ describe("generateAzureSwaFiles", () => {
     await generateAzureSwaFiles({
       distDir: pathToFileURL(`${join(root, "dist", "client")}/`),
       functionName: "server",
+      projectRoot: projectRootUrl(),
     });
 
     expect(await readJson("api/package.json")).toMatchObject({
@@ -272,6 +357,7 @@ describe("generateAzureSwaFiles", () => {
     await generateAzureSwaFiles({
       distDir: pathToFileURL(`${join(root, "dist", "client")}/`),
       functionName: "server",
+      projectRoot: projectRootUrl(),
     });
 
     await expect(
