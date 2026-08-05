@@ -51,7 +51,7 @@ Every task should be completed with this record:
 This is an assessment snapshot, not a claim that every hardening item below is complete. Refresh drift-prone evidence before starting a release.
 
 - [x] The adapter and high-fidelity example build successfully after dependencies are installed and the adapter is built first.
-- [x] Vitest: 36/36 tests passed on 2026-08-05, including the runtime-manifest and package-contract coverage.
+- [x] Vitest: 39/39 tests passed on 2026-08-05, including the runtime-manifest, package-contract, and workflow-contract coverage.
 - [x] Typecheck, publint, AreTheTypesWrong, Knip, API docs validation, size-limit, and package dry-run passed on 2026-08-05.
 - [x] The package entrypoint measured 2.89 kB Brotli against a 15 kB limit on 2026-08-05.
 - [x] The documented production deployment returned 200 for the root, health endpoint, prerendered hybrid page, and Advanced Routing sample; an unknown route returned 404 on 2026-08-02.
@@ -90,17 +90,17 @@ Do not advance a gate merely because a downstream phase has code on a branch. Th
   - Evidence: disposable archive `/var/folders/wv/3m5dhh6x5pv9w0fbfzymldnw0000gn/T/tmp.Xtaz27Dc1C`; `bun install --frozen-lockfile && env npm_config_cache=/private/tmp/astro-azure-npm-cache bun run check` exited 0 after 36 tests and the example build.
   - Verified: 2026-08-05
 
-- [~] P0 `[repro]` Define the canonical quality command and make its order explicit: build, typecheck, unit/integration tests, example build/preview, package lint, Knip, API docs, size, and pack validation.
+- [x] P0 `[repro]` Define the canonical quality command and make its order explicit: build, typecheck, unit/integration tests, example build/preview, package lint, Knip, API docs, size, and pack validation.
   - Depends on: clean-checkout-safe `check`
   - Acceptance: CI, release, and deployment workflows can invoke the same documented gate without duplicating hidden prerequisites.
-  - Evidence: root `check` now has the deterministic build → typecheck → test → example-build order; the full package lint/Knip/docs/size/pack matrix passed separately on 2026-08-05. Reusable workflow wiring remains in the Phase 2 plan.
-  - Verified: 2026-08-05 (local gate; workflow wiring pending)
+  - Evidence: root `check` has the deterministic build → typecheck → test → example-build order; `.github/workflows/quality.yml` runs the complete matrix and CI, release, and Azure upload call it before their own work; the local matrix passed on 2026-08-05.
+  - Verified: 2026-08-05
 
-- [~] P1 `[repro]` Pin the Bun toolchain with a root `packageManager` declaration and a matching `oven-sh/setup-bun` version in workflows.
+- [x] P1 `[repro]` Pin the Bun toolchain with a root `packageManager` declaration and a matching `oven-sh/setup-bun` version in workflows.
   - Depends on: none
   - Acceptance: local and CI runs report the same Bun version; no workflow uses `bun-version: latest`.
-  - Evidence: root `packageManager: "bun@1.3.11"`; all current verification runs used Bun 1.3.11. Workflow setup pin review remains in the Phase 2 plan.
-  - Verified: 2026-08-05 (manifest/local; workflow pending)
+  - Evidence: root `packageManager: "bun@1.3.11"`; reusable quality, release, and Azure workflows use `bun-version: "1.3.11"`; no workflow uses `bun-version: latest`.
+  - Verified: 2026-08-05
 
 - [ ] P1 `[repro]` Add a disposable clean-install verification path that checks the worktree remains clean after build, tests, preview, pack, and documentation generation.
   - Depends on: canonical quality command
@@ -117,7 +117,7 @@ Do not advance a gate merely because a downstream phase has code on a branch. Th
 ### Phase 0 exit gate — Gate A: local quality
 
 - [x] `bun install --frozen-lockfile` succeeds from a clean checkout.
-- [~] The canonical quality command passes with zero errors and zero warnings where the tool supports warnings; package-quality commands are currently run as a separate matrix pending reusable workflow wiring.
+- [x] The canonical quality command passes with zero errors and zero warnings where the tool supports warnings; the reusable workflow now invokes the full package-quality matrix.
 - [x] The example preview suite can bind to loopback in the supported verification environment.
 - [x] The worktree is clean after verification.
 
@@ -185,17 +185,17 @@ Do not advance a gate merely because a downstream phase has code on a branch. Th
 
 **Goal:** prevent a passing upload from being mistaken for a verified deployment or release.
 
-- [ ] P0 `[ci]` Create one reusable quality gate that release and deployment jobs must consume before publish/upload.
+- [~] P0 `[ci]` Create one reusable quality gate that release and deployment jobs must consume before publish/upload.
   - Depends on: Gate A and Gate B
   - Acceptance: a failing adapter test, example build, package check, or artifact verification prevents release and deployment.
-  - Evidence: workflow dependency graph and a deliberately failing dry-run or documented branch-protection check
-  - Verified: —
+  - Evidence: `.github/workflows/quality.yml`, workflow contract tests (3/3), and `needs: quality` in release and Azure upload; local matrix passed. A live required-status/failing-gate run is still pending.
+  - Verified: 2026-08-05 (local; live CI pending)
 
-- [ ] P0 `[ci]` Make PR smoke tests use the Azure Static Web Apps preview URL returned by the deploy action rather than the hard-coded production hostname.
+- [~] P0 `[ci]` Make PR smoke tests use the Azure Static Web Apps preview URL returned by the deploy action rather than the hard-coded production hostname.
   - Depends on: reusable quality gate
   - Acceptance: a PR tests its own deployed commit; production smoke runs only for production deployment events.
-  - Evidence: workflow log showing the preview URL and route results
-  - Verified: —
+  - Evidence: Azure workflow resolves a successful current-commit deployment `environment_url`, rejects non-HTTPS/missing preview URLs, and passes the selected base URL to `/api/health`; workflow contract tests assert production is absent from the smoke step. A live PR preview log is still pending.
+  - Verified: 2026-08-05 (local; live preview pending)
 
 - [ ] P0 `[ci]` Expand deployment smoke coverage to SSR, dynamic routing, prerendered content, API JSON, POST body handling, redirects, multiple cookies, 404 behaviour, middleware headers, and Advanced Routing.
   - Depends on: preview URL wiring
@@ -398,6 +398,7 @@ These items should not delay the hardened release unless a decision explicitly p
 | D-005 | Streaming go/no-go decision | — | Deferred | — |
 | E-001 | Baseline local/package/live evidence refresh | — | Refresh before release | 2026-08-02 snapshot |
 | E-002 | Dependency vulnerability audit | — | Outstanding | Environment egress restriction |
+| E-003 | CI quality gate and PR preview smoke implementation | Codex | Local implementation verified; live evidence pending | 2026-08-05: YAML parsed, workflow contract 3/3, local quality matrix green; GitHub required-status and live PR preview run still required. |
 
 ## Deferred / explicitly out of scope
 
