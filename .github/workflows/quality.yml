@@ -1,0 +1,44 @@
+name: Quality Gate
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run canonical check
+        run: bun run check
+
+      - name: Lint package
+        run: bun run lint
+
+      - name: Check Knip
+        run: bun run lint:knip
+
+      - name: Check API docs
+        run: bun run --cwd packages/astro-azure-swa docs:api:check
+
+      - name: Check size
+        run: bun run size
+
+      - name: Pack dry run
+        env:
+          npm_config_cache: ${{ runner.temp }}/npm-cache
+        run: bun run --cwd packages/astro-azure-swa pack:dry-run

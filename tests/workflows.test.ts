@@ -37,14 +37,14 @@ describe("GitHub workflow hardening contract", () => {
     const azure = await readWorkflow("azure-static-web-apps.yml");
 
     expect(ci).toMatch(
-      /quality:\s*\n\s+uses: \.\/\.github\/workflows\/quality\.yml/s,
+      /quality:\s*\n(?:\s+name:.*\n)?\s+uses: \.\/\.github\/workflows\/quality\.yml/s,
     );
     expect(release).toMatch(
-      /quality:\s*\n\s+uses: \.\/\.github\/workflows\/quality\.yml/s,
+      /quality:\s*\n(?:\s+name:.*\n)?\s+uses: \.\/\.github\/workflows\/quality\.yml/s,
     );
     expect(release).toMatch(/release:\s*\n\s+needs: quality/s);
     expect(azure).toMatch(
-      /quality:\s*\n(?:\s+if:.*\n)?\s+uses: \.\/\.github\/workflows\/quality\.yml/s,
+      /quality:\s*\n(?:\s+if:.*\n)?(?:\s+name:.*\n)?\s+uses: \.\/\.github\/workflows\/quality\.yml/s,
     );
     expect(azure).toMatch(/build_and_deploy:\s*\n\s+needs: quality/s);
     expect(ci + "\n" + release + "\n" + azure).not.toContain(
