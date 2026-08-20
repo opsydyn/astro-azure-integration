@@ -1,5 +1,11 @@
 # @opsydyn/astro-azure-swa
 
+## 1.0.1
+
+### Patch Changes
+
+- 1d34c25: Harden runtime manifest resolution and Azure Static Web Apps CI, deployment, and release gates.
+
 ## 1.0.0
 
 ### Major Changes
